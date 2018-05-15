@@ -8,7 +8,7 @@
 
 # wc_test
 
-Methods for testing whole-cell knowledge bases and models
+Framework for testing whole-cell knowledge bases and models
 
 ## Installation
 1. Install dependencies

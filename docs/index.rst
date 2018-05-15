@@ -1,7 +1,7 @@
 wc_test documentation
 =====================
 
-Methods for testing whole-cell knowledge bases and models
+Framework for testing whole-cell knowledge bases and models
 
 Contents
 --------
