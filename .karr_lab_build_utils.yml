@@ -1,4 +1,7 @@
 static_analyses:
   ignore_files: []
-downstream_dependencies: []
-email_notifications: []
+downstream_dependencies: 
+  - mycoplasma_pneumoniae
+email_notifications:
+  - balazs.szigeti@mssm.edu
+  - jonrkarr@gmail.com
