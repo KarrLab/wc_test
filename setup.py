@@ -22,7 +22,7 @@ md = pkg_utils.get_package_metadata(dirname, name, package_data_filename_pattern
 setuptools.setup(
     name=name,
     version=md.version,
-    description='Methods to test whole cell models',
+    description='Methods for testing whole-cell knowledge bases and models',
     long_description=md.long_description,
     url="https://github.com/KarrLab/" + name,
     download_url='https://github.com/KarrLab/' + name,
