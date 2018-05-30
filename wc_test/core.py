@@ -6,64 +6,68 @@
 :License: MIT
 """
 
+import os
+import wc_lang
 import unittest
-
+from wc_sim.multialgorithm.simulation import Simulation
+from wc_sim.multialgorithm.run_results import RunResults
 
 class SubmodelDynamicsTestCase(unittest.TestCase):
-    """ Methods for verifying submodels
-    """
+    """ Methods for verifying submodels  """
 
-    def is_species_essential(model, species_type_id, compartment_id, target_species_type_id, target_compartment_id, time, is_constant):
+    results_dir = os.path.expanduser('~/tmp/checkpoints_dir/')
+
+    def is_species_constant(model_path, end_time, checkpoint_period,
+                            tweak_specie_type_id, tweak_specie_compartment_id,
+                            target_specie_type_id, target_specie_compartment_id):
+
         """ Checks whether setting the concentration of species_type[compartment] to 0 either:
 
-        * reduces the concentration of specie 'target_id' (instance of 'target_class') to 0 within 'time'
-        * stabilizes (i.e. remains constant) the concentration of target_species_type[target_compartment] within 'time'
+            * reduces the concentration of specie 'target_id' (instance of 'target_class') to 0 within 'time'
+            * stabilizes (i.e. remains constant) the concentration of target_species_type[target_compartment] within 'time'
 
-        Args:
-            model (:obj:`wc_lang.Model`): model
-            species_type (:obj:`wc_lang.SpeciesType`): species type
-            compartment (:obj:`wc_lang.CompartmentModel`): compartment
-            target_species_type (:obj:`wc_lang.SpeciesType`):
-            target_compartment (:obj:`wc_lang.CompartmentModel`):
-            time (:obj:`float`): time
-            is_constant (:obj:`bool`):
+            Args:
+                model (:obj:`wc_lang.Model`): model
+                species_type (:obj:`wc_lang.SpeciesType`): species type
+                compartment (:obj:`wc_lang.CompartmentModel`): compartment
+                target_species_type (:obj:`wc_lang.SpeciesType`):
+                target_compartment (:obj:`wc_lang.CompartmentModel`):
+                time (:obj:`float`): time
+                is_constant (:obj:`bool`):
 
-        Returns:
-            :obj:`bool`:
+            Returns:
+                :obj:`bool`:
+
+            TODO: - integrate into test_full_model.py
         """
 
-        specie = model.species_types.get_one(id=species_type_id).species.get_one(compartment=compartment_id)
-        specie.concetration.value = 0
+        # Load model
+        model = wc_lang.io.Reader().run(model_path)
 
-        if is_constant:
-            target_concetration = target_specie.concetration.value
+        # Tweak concentration fo specie
+        tweak_specie_compartment = model.compartments.get_one(id=tweak_specie_compartment_id)
+        tweak_specie = model.species_types.get_one(id=tweak_specie_type_id).species.get_one(compartment=tweak_specie_compartment)
+        tweak_specie.concentration.value = 0
 
-        """ add code to run model in wc_sim once Arthur fixed repo """
+        # Run model
+        simulation = Simulation(model)
+        num_events, results_dir = simulation.run(end_time = end_time,
+                                                 results_dir = results_dir,
+                                                 checkpoint_period = end_time) # Save tiem by having 1 checkpoint
+        run_results = RunResults(results_dir)
 
-        target_specie = model.species_types.get_one(id=target_species_type_id).species.get_one(compartment=target_compartment_id)
+        # Check target species concentration at the end of simulation
+        target_specie_compartment = model.compartments.get_one(id=target_specie_compartment_id)
+        target_specie = model.species_types.get_one(id=target_specie_type_id).species.get_one(compartment=target_specie_compartment)
+        concentration = run_results.get('populations')[tweak_specie.id()][:].values #convert panda.series to np.ndarray
 
-        if is_constant:
-            target_specie.concetration.value
-            self.assertAlmostEqual(target_specie.concetration.value, target_concetration)  # results at time t
+        if all(concentration[0]==concentration):
+            return True
         else:
-            self.assertAlmostEqual(target_specie.concetration.value, 0)
+            return False
 
     def is_reaction_essential(model, reaction, target_species_type_id, target_compartment_id, time, is_constant):
-        """ Checks whether setting K_cat of 'reaction' to 0 either:
+        pass
 
-        * reduces the concentration of specie 'target_id' (instance of 'target_class') to 0 within 'time'
-        * stabilizes (i.e. remains constant) the concentration of target_species_type[target_compartment] within 'time'
-
-        Args:
-            model (:obj:`wc_lang.Model`): model
-            reaction (:obj:`wc_lang.Reaction`): reaction
-            compartment (:obj:`wc_lang.CompartmentModel`): compartment
-            target_species_type (:obj:`wc_lang.SpeciesType`):
-            target_compartment (:obj:`wc_lang.CompartmentModel`):
-            time (:obj:`float`): time
-            is_constant (:obj:`bool`):
-
-        Returns:
-            :obj:`bool`:
-        """
+    def parameter_scan(model, reaction, target_species_type_id, target_compartment_id, time, is_constant):
         pass
