@@ -4,6 +4,10 @@
 :Date: 2018-05-10
 :Copyright: 2018, Karr Lab
 :License: MIT
+
+TODO:
+- generalize inputs; concentration / rate laws should be set to 0, but rather to a user defined value / list of values
+- generalize test condition; concentration of target specie should not neccessarily stay contant, but rather stay within epsilon 
 """
 
 import os
@@ -16,9 +20,7 @@ from wc_sim.multialgorithm.run_results import RunResults
 class SubmodelDynamicsTestCase(unittest.TestCase):
     """ Methods for verifying submodels  """
 
-
-    def is_species_constant(self,model_path, end_time, checkpoint_period, tweak_specie_ids, target_specie_ids):
-
+    def is_constant_tweak_species(self, model_path, end_time, checkpoint_period, tweak_specie_ids, target_specie_ids):
         """ Checks whether setting the concentration of species_type[compartment] to 0 either:
 
             * reduces the concentration of specie 'target_id' (instance of 'target_class') to 0 within 'time'
@@ -35,8 +37,6 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
 
             Returns:
                 :obj:`bool`:
-
-            TODO: - integrate into test_full_model.py
         """
 
         # Load model
@@ -50,6 +50,41 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
             tweak_specie_compartment = model.compartments.get_one(id=tweak_compartment_id)
             tweak_specie = model.species_types.get_one(id=tweak_specie_type_id).species.get_one(compartment=tweak_specie_compartment)
             tweak_specie.concentration.value = 0
+
+        # Run model
+        results_dir = os.path.expanduser('~/tmp/checkpoints_dir/')
+        simulation = Simulation(model)
+        num_events, results_dir = simulation.run(end_time = end_time, results_dir = results_dir, checkpoint_period = checkpoint_period)
+        run_results = RunResults(results_dir)
+
+        # Check target species concentration at the end of simulation
+        is_constant = []
+        for target_specie_id in target_specie_ids:
+            temp = re.findall('[a-zA-Z_0-9]+', target_specie_id)
+            target_specie_type_id = temp[0]
+            target_compartment_id = temp[1]
+            target_compartment = model.compartments.get_one(id=target_compartment_id)
+            target_specie = model.species_types.get_one(id=target_specie_type_id).species.get_one(compartment=target_compartment)
+            concentration = run_results.get('populations')[target_specie.id()][:].values #convert panda.series to np.ndarray
+
+            if all(concentration[0]==concentration):
+                is_constant.append('True')
+            else:
+                is_constant.append('False')
+
+        return is_constant, run_results
+
+    def is_constant_tweak_reactions(self, model_path=None, end_time=None, checkpoint_period=None, tweak_reaction_ids=None, target_specie_ids=None):
+        # Load model
+        model = wc_lang.io.Reader().run(model_path)
+
+        # Set concentration of species to 0:
+        for tweak_reaction_id in tweak_reaction_ids:
+            for reaction in model.get_reactions():
+                if reaction.id == tweak_reaction_id:
+                    reaction.rate_laws[0].k_m = 0
+                    reaction.rate_laws[0].k_cat = 0
+                    break
 
         # Run model
         results_dir = os.path.expanduser('~/tmp/checkpoints_dir/')
@@ -74,10 +109,7 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
             else:
                 is_constant.append('False')
 
-        return is_constant
-
-    def is_reaction_essential(model, reaction, target_species_type_id, target_compartment_id, time, is_constant):
-        pass
+        return is_constant, run_results
 
     def parameter_scan(model, reaction, target_species_type_id, target_compartment_id, time, is_constant):
         pass
