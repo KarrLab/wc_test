@@ -7,7 +7,7 @@
 
 TODO:
 - generalize inputs; concentration / rate laws should be set to 0, but rather to a user defined value / list of values
-- generalize test condition; concentration of target specie should not neccessarily stay contant, but rather stay within epsilon 
+- generalize test condition; concentration of target specie should not neccessarily stay contant, but rather stay within epsilon
 """
 
 import os
@@ -74,7 +74,33 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
 
         return is_constant, run_results
 
-    def is_constant_tweak_reactions(self, model_path=None, end_time=None, checkpoint_period=None, tweak_reaction_ids=None, target_specie_ids=None):
+    def concentrations_scan(self, model_path, end_time, checkpoint_period, tweak_specie_ids, concentrations):
+        # Load model
+        model = wc_lang.io.Reader().run(model_path)
+        run_results =[]
+
+        # Loop through the
+        for concentration in concentrations:
+
+            # Set concentration of species to 0:
+            for tweak_specie_id in tweak_specie_ids:
+                temp = re.findall('[a-zA-Z_0-9]+', tweak_specie_id)
+                tweak_specie_type_id = temp[0]
+                tweak_compartment_id = temp[1]
+                tweak_specie_compartment = model.compartments.get_one(id=tweak_compartment_id)
+                tweak_specie = model.species_types.get_one(id=tweak_specie_type_id).species.get_one(compartment=tweak_specie_compartment)
+                tweak_specie.concentration.value = concentration
+
+            # Run model
+            results_dir = os.path.expanduser('~/tmp/checkpoints_dir/')
+            simulation = Simulation(model)
+            num_events, results_dir = simulation.run(end_time = end_time, results_dir = results_dir, checkpoint_period = checkpoint_period)
+            run_result = RunResults(results_dir)
+            run_results.append(run_result)
+
+        return run_results
+
+    def is_constant_tweak_reactions(self, model_path, end_time, checkpoint_period, tweak_reaction_ids, target_specie_ids):
         # Load model
         model = wc_lang.io.Reader().run(model_path)
 
@@ -111,5 +137,26 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
 
         return is_constant, run_results
 
-    def parameter_scan(model, reaction, target_species_type_id, target_compartment_id, time, is_constant):
-        pass
+    def reactions_scan(self, model_path, end_time, checkpoint_period, tweak_reaction_ids, k_cats):
+        # Load model
+        model = wc_lang.io.Reader().run(model_path)
+        run_results=[]
+
+        for k_cat in k_cats:
+            # Set concentration of species to 0:
+            for tweak_reaction_id in tweak_reaction_ids:
+                for reaction in model.get_reactions():
+                    if reaction.id == tweak_reaction_id:
+                        reaction.rate_laws[0].k_cat = k_cat
+                        break
+
+            # Run model
+            results_dir = os.path.expanduser('~/tmp/checkpoints_dir/')
+            simulation = Simulation(model)
+            num_events, results_dir = simulation.run(end_time = end_time,
+                                                     results_dir = results_dir,
+                                                     checkpoint_period = checkpoint_period)
+                                                     
+        run_result = RunResults(results_dir)
+        run_results.append(run_result)
+        return run_results
