@@ -20,7 +20,7 @@ from wc_sim.multialgorithm.run_results import RunResults
 class SubmodelDynamicsTestCase(unittest.TestCase):
     """ Methods for verifying submodels  """
 
-    def is_constant_tweak_species(self, model_path, end_time, checkpoint_period, tweak_specie_ids, target_specie_ids):
+    def is_constant_species(self, model_path, end_time, checkpoint_period, tweak_specie_ids, target_specie_ids):
         """ Checks whether setting the concentration of species_type[compartment] to 0 either:
 
             * reduces the concentration of specie 'target_id' (instance of 'target_class') to 0 within 'time'
@@ -74,33 +74,42 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
 
         return is_constant, run_results
 
-    def concentrations_scan(self, model_path, end_time, checkpoint_period, tweak_specie_ids, concentrations):
+    def scan_species(self, model_path, end_time, checkpoint_period, tweak_specie_ids, target_specie_id, init_concentrations):
         # Load model
         model = wc_lang.io.Reader().run(model_path)
-        run_results =[]
+        final_concentrations=[]
 
-        # Loop through the
-        for concentration in concentrations:
+        temp = re.findall('[a-zA-Z_0-9]+', target_specie_id)
+        target_specie_type_id = temp[0]
+        target_compartment_id = temp[1]
+        target_compartment = model.compartments.get_one(id=target_compartment_id)
+        target_specie = model.species_types.get_one(id=target_specie_type_id).species.get_one(compartment=target_compartment)
 
-            # Set concentration of species to 0:
+        for init_concentration in init_concentrations:
             for tweak_specie_id in tweak_specie_ids:
                 temp = re.findall('[a-zA-Z_0-9]+', tweak_specie_id)
                 tweak_specie_type_id = temp[0]
                 tweak_compartment_id = temp[1]
                 tweak_specie_compartment = model.compartments.get_one(id=tweak_compartment_id)
                 tweak_specie = model.species_types.get_one(id=tweak_specie_type_id).species.get_one(compartment=tweak_specie_compartment)
-                tweak_specie.concentration.value = concentration
+                tweak_specie.concentration.value = init_concentration
 
             # Run model
             results_dir = os.path.expanduser('~/tmp/checkpoints_dir/')
             simulation = Simulation(model)
-            num_events, results_dir = simulation.run(end_time = end_time, results_dir = results_dir, checkpoint_period = checkpoint_period)
-            run_result = RunResults(results_dir)
-            run_results.append(run_result)
+            num_events, results_dir = simulation.run(end_time = end_time,
+                                                     results_dir = results_dir,
+                                                     checkpoint_period = checkpoint_period)
 
-        return run_results
+            run_results = RunResults(results_dir)
+            concentrations = run_results.get('populations')[target_specie.id()][:].values
+            final_time = int(end_time/checkpoint_period)
+            concentration = concentrations[final_time]
+            final_concentrations.append(concentration)
 
-    def is_constant_tweak_reactions(self, model_path, end_time, checkpoint_period, tweak_reaction_ids, target_specie_ids):
+        return final_concentrations
+
+    def is_constant_reactions(self, model_path, end_time, checkpoint_period, tweak_reaction_ids, target_specie_ids):
         # Load model
         model = wc_lang.io.Reader().run(model_path)
 
@@ -137,10 +146,16 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
 
         return is_constant, run_results
 
-    def reactions_scan(self, model_path, end_time, checkpoint_period, tweak_reaction_ids, k_cats):
+    def scan_reactions(self, model_path, end_time, checkpoint_period, tweak_reaction_ids, target_specie_id, k_cats):
         # Load model
         model = wc_lang.io.Reader().run(model_path)
-        run_results=[]
+        final_concentrations=[]
+
+        temp = re.findall('[a-zA-Z_0-9]+', target_specie_id)
+        target_specie_type_id = temp[0]
+        target_compartment_id = temp[1]
+        target_compartment = model.compartments.get_one(id=target_compartment_id)
+        target_specie = model.species_types.get_one(id=target_specie_type_id).species.get_one(compartment=target_compartment)
 
         for k_cat in k_cats:
             # Set concentration of species to 0:
@@ -156,7 +171,11 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
             num_events, results_dir = simulation.run(end_time = end_time,
                                                      results_dir = results_dir,
                                                      checkpoint_period = checkpoint_period)
-                                                     
-        run_result = RunResults(results_dir)
-        run_results.append(run_result)
-        return run_results
+
+            run_results = RunResults(results_dir)
+            concentrations = run_results.get('populations')[target_specie.id()][:].values
+            final_time = int(end_time/checkpoint_period)
+            concentration = concentrations[final_time]
+            final_concentrations.append(concentration)
+
+        return final_concentrations
