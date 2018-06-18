@@ -64,11 +64,31 @@ class TestCore(unittest.TestCase):
 
     #def test_are_reactions_mass_balanced(self):
         mass_balanced  = wc_test.SubmodelDynamicsTestCase().are_reactions_mass_balanced(self.model_path)
-        # In test model transcription reactions are charge-, but not mass balanced
-        self.assertEqual(mass_balanced, [True, True, True, True, True, False, False, False, False, False])
-        wc_lang.SpeciesType.objects.reset() # reset indexer
+        # In test model transcription reactions are charge-, but not mass balanced;
+        # degradation reactions are mass-, but not charge balanced
+        self.assertEqual(mass_balanced['degradation_RNA_1'], True)
+        self.assertEqual(mass_balanced['degradation_RNA_2'], True)
+        self.assertEqual(mass_balanced['degradation_RNA_3'], True)
+        self.assertEqual(mass_balanced['degradation_RNA_4'], True)
+        self.assertEqual(mass_balanced['degradation_RNA_5'], True)
+        self.assertEqual(mass_balanced['transcription_RNA_1'], False)
+        self.assertEqual(mass_balanced['transcription_RNA_2'], False)
+        self.assertEqual(mass_balanced['transcription_RNA_3'], False)
+        self.assertEqual(mass_balanced['transcription_RNA_4'], False)
+        self.assertEqual(mass_balanced['transcription_RNA_5'], False)
+        wc_lang.SpeciesType.objects.reset()
 
     #def test_are_reactions_charge_balanced(self):
         charge_balanced = wc_test.SubmodelDynamicsTestCase().are_reactions_charge_balanced(self.model_path)
-        # In test model transcription reactions are charge-,  but not mass balanced
-        self.assertEqual(charge_balanced, [True, True, True, True, True, False, False, False, False, False])
+        # In test model transcription reactions are charge-, but not mass balanced;
+        # degradation reactions are mass-, but not charge balanced
+        self.assertEqual(charge_balanced['degradation_RNA_1'], False)
+        self.assertEqual(charge_balanced['degradation_RNA_2'], False)
+        self.assertEqual(charge_balanced['degradation_RNA_3'], False)
+        self.assertEqual(charge_balanced['degradation_RNA_4'], False)
+        self.assertEqual(charge_balanced['degradation_RNA_5'], False)
+        self.assertEqual(charge_balanced['transcription_RNA_1'], True)
+        self.assertEqual(charge_balanced['transcription_RNA_2'], True)
+        self.assertEqual(charge_balanced['transcription_RNA_3'], True)
+        self.assertEqual(charge_balanced['transcription_RNA_4'], True)
+        self.assertEqual(charge_balanced['transcription_RNA_5'], True)
