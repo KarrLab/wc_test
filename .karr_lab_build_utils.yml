@@ -2,6 +2,7 @@ static_analyses:
   ignore_files: []
 downstream_dependencies: 
   - mycoplasma_pneumoniae
+  - rand_wc_model_gen
 email_notifications:
   - balazs.szigeti@mssm.edu
   - jonrkarr@gmail.com
