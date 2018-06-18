@@ -179,3 +179,45 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
             final_concentrations.append(concentration)
 
         return final_concentrations
+
+    def are_reactions_mass_balanced(self, model_path):
+        model = wc_lang.io.Reader().run(model_path)
+        is_mass_balanced = []
+
+        for reaction in model.get_reactions():
+            lhs_mass = 0
+            rhs_mass = 0
+
+            for participant in reaction.participants:
+                if participant.coefficient < 0:
+                    lhs_mass += abs(participant.coefficient)*participant.species.species_type.molecular_weight
+                elif participant.coefficient > 0:
+                    rhs_mass += abs(participant.coefficient)*participant.species.species_type.molecular_weight
+
+            if lhs_mass == rhs_mass:
+                is_mass_balanced.append(True)
+            else:
+                is_mass_balanced.append(False)
+
+        return is_mass_balanced
+
+    def are_reactions_charge_balanced(self, model_path):
+        model = wc_lang.io.Reader().run(model_path)
+        is_charge_balanced = []
+
+        for reaction in model.get_reactions():
+            lhs_charge = 0
+            rhs_charge = 0
+
+            for participant in reaction.participants:
+                if participant.coefficient < 0:
+                    lhs_charge += abs(participant.coefficient)*participant.species.species_type.charge
+                elif participant.coefficient > 0:
+                    rhs_charge += abs(participant.coefficient)*participant.species.species_type.charge
+
+            if lhs_charge == rhs_charge:
+                is_charge_balanced.append(True)
+            else:
+                is_charge_balanced.append(False)
+
+        return is_charge_balanced

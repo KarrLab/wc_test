@@ -5,6 +5,7 @@
 :Copyright: 2018, Karr Lab
 :License: MIT
 
+Todo: add more cases to make sure every  edge case is covered
 """
 
 import wc_lang
@@ -60,3 +61,14 @@ class TestCore(unittest.TestCase):
         self.assertGreater(final_concentrations[3], final_concentrations[2])
         self.assertGreater(final_concentrations[4], final_concentrations[3])
         wc_lang.SpeciesType.objects.reset() # reset indexer
+
+    #def test_are_reactions_mass_balanced(self):
+        mass_balanced  = wc_test.SubmodelDynamicsTestCase().are_reactions_mass_balanced(self.model_path)
+        # In test model transcription reactions are charge-, but not mass balanced
+        self.assertEqual(mass_balanced, [True, True, True, True, True, False, False, False, False, False])
+        wc_lang.SpeciesType.objects.reset() # reset indexer
+
+    #def test_are_reactions_charge_balanced(self):
+        charge_balanced = wc_test.SubmodelDynamicsTestCase().are_reactions_charge_balanced(self.model_path)
+        # In test model transcription reactions are charge-, but not mass balanced
+        self.assertEqual(charge_balanced, [True, True, True, True, True, False, False, False, False, False])
