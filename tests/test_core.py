@@ -70,5 +70,5 @@ class TestCore(unittest.TestCase):
 
     #def test_are_reactions_charge_balanced(self):
         charge_balanced = wc_test.SubmodelDynamicsTestCase().are_reactions_charge_balanced(self.model_path)
-        # In test model transcription reactions are charge-, but not mass balanced
+        # In test model transcription reactions are charge-,  but not mass balanced
         self.assertEqual(charge_balanced, [True, True, True, True, True, False, False, False, False, False])
