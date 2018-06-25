@@ -17,10 +17,134 @@ import unittest
 from wc_sim.multialgorithm.simulation import Simulation
 from wc_sim.multialgorithm.run_results import RunResults
 
-class SubmodelDynamicsTestCase(unittest.TestCase):
-    """ Methods for verifying submodels  """
+class KnowledgeBaseTestCase(unittest.TestCase):
+    """ Test case for a knowledge base
 
-    def is_constant_species(self, model_path, end_time, checkpoint_period, tweak_specie_ids, target_specie_ids):
+    Attributes:
+        kb (:obj:`wc_kb.KnowledgeBase`): knowledge base
+    """
+    pass
+
+class ModelGenerationTestCase(unittest.TestCase):
+    """ Test case for model generation
+
+    Attributes:
+        kb (:obj:`wc_kb.KnowledgeBase`): knowledge base
+    """
+    pass
+
+class ModelStaticTestCase(unittest.TestCase):
+    """ Test case for static properties of models
+    """
+
+    def reactions_mass_balanced(self, model):
+        """ Testing whether reactions in the model are mass balanced.
+
+        Args:
+            model (:obj:`wc_lang.core.Model`): model
+
+        Returns:
+            mass_balanced (:obj:`dict`): keys are reaction.ids; value is True if reaction is mass balanced, False otherwise
+        """
+
+        if not isinstance(model, wc_lang.core.Model):
+            model = wc_lang.io.Reader().run(model)
+
+        mass_balanced = {}
+        imbalances = []
+
+        for reaction in model.get_reactions():
+            is_balanced = self.is_mass_balanced(reaction)
+            mass_balanced[reaction.id] = is_balanced
+
+            if not is_balanced:
+                imbalances.append(reaction.id)
+
+        if imbalances:
+            print('The following reactions are not mass balanced:\n  {}'.format('\n  '.join(imbalances)))
+
+        return mass_balanced
+
+    def reactions_charge_balanced(self, model):
+        """ Testing whether reactions in the model are charge balanced.
+
+        Args:
+            model (:obj:`wc_lang.core.Model`): model
+
+        Returns:
+            charge_balanced (:obj:`dict`): keys are reaction.ids; value is True if reaction is charge balanced, False otherwise
+        """
+
+        if not isinstance(model, wc_lang.core.Model):
+            model = wc_lang.io.Reader().run(model)
+
+        charge_balanced = {}
+        imbalances = []
+
+        for reaction in model.get_reactions():
+            is_balanced = self.is_charge_balanced(reaction)
+            charge_balanced[reaction.id] = is_balanced
+
+            if not is_balanced:
+                imbalances.append(reaction.id)
+
+        if imbalances:
+            print('The following reactions are not charge balanced:\n  {}'.format('\n  '.join(imbalances)))
+
+        return charge_balanced
+
+    def is_charge_balanced(self, reaction):
+        """ Testing whether a reaction is charge balanced. Retruns boolean True if it is, False otherwise
+
+        Args:
+            reaction (:obj:`wc_lang.core.Reaction`): reaction
+        """
+
+        if not isinstance(reaction, wc_lang.core.Reaction):
+            raise Exception('{} is not an instance of the expected wc_lang.core.reaction class'.format(reaction))
+
+        lhs_charge = 0
+        rhs_charge = 0
+
+        for participant in reaction.participants:
+            if participant.coefficient < 0:
+                lhs_charge += abs(participant.coefficient)*participant.species.species_type.charge
+            elif participant.coefficient > 0:
+                rhs_charge += abs(participant.coefficient)*participant.species.species_type.charge
+
+        if lhs_charge == rhs_charge:
+            return True
+        else:
+            return False
+
+    def is_mass_balanced(self, reaction):
+        """ Testing whether a reaction is mass balanced. Retruns boolean True if it is, False otherwise
+
+        Args:
+            reaction (:obj:`wc_lang.core.Reaction`): reaction
+        """
+
+        if not isinstance(reaction, wc_lang.core.Reaction):
+            raise Exception('{} is not an instance of the expected wc_lang.core.reaction class'.format(reaction))
+
+        lhs_mass = 0
+        rhs_mass = 0
+
+        for participant in reaction.participants:
+            if participant.coefficient < 0:
+                lhs_mass += abs(participant.coefficient)*participant.species.species_type.molecular_weight
+            elif participant.coefficient > 0:
+                rhs_mass += abs(participant.coefficient)*participant.species.species_type.molecular_weight
+
+        if lhs_mass == rhs_mass:
+            return True
+        else:
+            return False
+
+class ModelDynamicsTestCase(unittest.TestCase):
+    """ Methods for verifying submodels """
+
+    def is_constant_species(self, model, end_time, checkpoint_period, tweak_specie_ids, target_specie_ids):
         """ Checks whether setting the concentration of species_type[compartment] to 0 either:
 
             * reduces the concentration of specie 'target_id' (instance of 'target_class') to 0 within 'time'
@@ -40,7 +164,8 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
         """
 
         # Load model
-        model = wc_lang.io.Reader().run(model_path)
+        if not isinstance(model, wc_lang.core.Model):
+            model = wc_lang.io.Reader().run(model)
 
         # Set concentration of species to 0:
         for tweak_specie_id in tweak_specie_ids:
@@ -74,9 +199,11 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
 
         return is_constant, run_results
 
-    def scan_species(self, model_path, end_time, checkpoint_period, tweak_specie_ids, target_specie_id, init_concentrations):
+    def scan_species(self, model, end_time, checkpoint_period, tweak_specie_ids, target_specie_id, init_concentrations):
         # Load model
-        model = wc_lang.io.Reader().run(model_path)
+        if not isinstance(model, wc_lang.core.Model):
+            model = wc_lang.io.Reader().run(model)
+
         final_concentrations=[]
 
         temp = re.findall('[a-zA-Z_0-9]+', target_specie_id)
@@ -109,9 +236,10 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
 
         return final_concentrations
 
-    def is_constant_reactions(self, model_path, end_time, checkpoint_period, tweak_reaction_ids, target_specie_ids):
+    def is_constant_reactions(self, model, end_time, checkpoint_period, tweak_reaction_ids, target_specie_ids):
         # Load model
-        model = wc_lang.io.Reader().run(model_path)
+        if not isinstance(model, wc_lang.core.Model):
+            model = wc_lang.io.Reader().run(model)
 
         # Set concentration of species to 0:
         for tweak_reaction_id in tweak_reaction_ids:
@@ -146,9 +274,11 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
 
         return is_constant, run_results
 
-    def scan_reactions(self, model_path, end_time, checkpoint_period, tweak_reaction_ids, target_specie_id, k_cats):
+    def scan_reactions(self, model, end_time, checkpoint_period, tweak_reaction_ids, target_specie_id, k_cats):
         # Load model
-        model = wc_lang.io.Reader().run(model_path)
+        if not isinstance(model, wc_lang.core.Model):
+            model = wc_lang.io.Reader().run(model)
+
         final_concentrations=[]
 
         temp = re.findall('[a-zA-Z_0-9]+', target_specie_id)
@@ -179,55 +309,3 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
             final_concentrations.append(concentration)
 
         return final_concentrations
-
-    def are_reactions_mass_balanced(self, model_path):
-        model = wc_lang.io.Reader().run(model_path)
-        is_mass_balanced = {}
-        imbalances = []
-
-        for reaction in model.get_reactions():
-            lhs_mass = 0
-            rhs_mass = 0
-
-            for participant in reaction.participants:
-                if participant.coefficient < 0:
-                    lhs_mass += abs(participant.coefficient)*participant.species.species_type.molecular_weight
-                elif participant.coefficient > 0:
-                    rhs_mass += abs(participant.coefficient)*participant.species.species_type.molecular_weight
-
-            if lhs_mass == rhs_mass:
-                is_mass_balanced[reaction.id]=True
-            else:
-                is_mass_balanced[reaction.id]=False
-                imbalances.append(reaction.id)
-
-        if imbalances:
-            print('The following reactions are not mass balanced:\n  {}'.format('\n  '.join(imbalances)))
-
-        return is_mass_balanced
-
-    def are_reactions_charge_balanced(self, model_path):
-        model = wc_lang.io.Reader().run(model_path)
-        is_charge_balanced = {}
-        imbalances = []
-
-        for reaction in model.get_reactions():
-            lhs_charge = 0
-            rhs_charge = 0
-
-            for participant in reaction.participants:
-                if participant.coefficient < 0:
-                    lhs_charge += abs(participant.coefficient)*participant.species.species_type.charge
-                elif participant.coefficient > 0:
-                    rhs_charge += abs(participant.coefficient)*participant.species.species_type.charge
-
-            if lhs_charge == rhs_charge:
-                is_charge_balanced[reaction.id]=True
-            else:
-                is_charge_balanced[reaction.id]=False
-                imbalances.append(reaction.id)
-
-        if imbalances:
-            print('The following reactions are not charge balanced:\n  {}'.format('\n  '.join(imbalances)))
-
-        return is_charge_balanced

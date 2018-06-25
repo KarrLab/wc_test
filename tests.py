@@ -30,7 +30,7 @@ class ModelTestCase(unittest.TestCase):
     Attributes:
         KB (:obj:`wc_kb.KnowledgeBase`): knowledge base
         MODEL (:obj:`wc_lang.Model`): model
-    ""
+    """
 
     def test_reactions_balanced(self):
         """ Check that each reaction is element and charge balanced
@@ -70,7 +70,7 @@ class SubmodelTestCase(unittest.TestCase):
     Attributes:
         KB (:obj:`wc_kb.KnowledgeBase`): knowledge base
         SUBMODEL (:obj:`wc_lang.Submodel`): submodel
-    ""
+    """
     pass
 
 
@@ -89,7 +89,7 @@ class ModelSimulationTestCase(unittest.TestCase):
         KB (:obj:`wc_kb.KnowledgeBase`): knowledge base
         MODEL (:obj:`wc_lang.Model`): model
         _results_path (:obj:`str`): path to temporarily save simulation result
-    """        
+    """
     def setUp(self):
         self._results_path = tempfile.mkdtemp()
 
@@ -123,7 +123,8 @@ class SubmodelSimulationTestCase(unittest.TestCase):
         KB (:obj:`wc_kb.KnowledgeBase`): knowledge base
         SUBMODEL (:obj:`wc_lang.Submodel`): submodel
         _results_path (:obj:`str`): path to temporarily save simulation result
-    ""
+    """
+
     def setUp(self):
         self._results_path = tempfile.mkdtemp()
 
