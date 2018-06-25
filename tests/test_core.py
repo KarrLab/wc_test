@@ -51,6 +51,7 @@ class TestCore(unittest.TestCase):
         self.assertGreater(final_concentrations[2], final_concentrations[1])
         self.assertGreater(final_concentrations[3], final_concentrations[2])
         self.assertGreater(final_concentrations[4], final_concentrations[3])
+        print('here')
         wc_lang.SpeciesType.objects.reset() # reset indexer
 
     def test_scan_species(self):
@@ -62,7 +63,7 @@ class TestCore(unittest.TestCase):
         self.assertGreater(final_concentrations[4], final_concentrations[3])
         wc_lang.SpeciesType.objects.reset() # reset indexer
 
-    #def test_are_reactions_mass_balanced(self):
+    def test_are_reactions_mass_balanced(self):
         mass_balanced  = wc_test.SubmodelDynamicsTestCase().are_reactions_mass_balanced(self.model_path)
         # In test model transcription reactions are charge-, but not mass balanced;
         # degradation reactions are mass-, but not charge balanced
@@ -78,7 +79,7 @@ class TestCore(unittest.TestCase):
         self.assertEqual(mass_balanced['transcription_RNA_5'], False)
         wc_lang.SpeciesType.objects.reset()
 
-    #def test_are_reactions_charge_balanced(self):
+    def test_are_reactions_charge_balanced(self):
         charge_balanced = wc_test.SubmodelDynamicsTestCase().are_reactions_charge_balanced(self.model_path)
         # In test model transcription reactions are charge-, but not mass balanced;
         # degradation reactions are mass-, but not charge balanced

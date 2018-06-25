@@ -183,6 +183,7 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
     def are_reactions_mass_balanced(self, model_path):
         model = wc_lang.io.Reader().run(model_path)
         is_mass_balanced = {}
+        imbalances = []
 
         for reaction in model.get_reactions():
             lhs_mass = 0
@@ -198,12 +199,17 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
                 is_mass_balanced[reaction.id]=True
             else:
                 is_mass_balanced[reaction.id]=False
+                imbalances.append(reaction.id)
+
+        if imbalances:
+            print('The following reactions are not mass balanced:\n  {}'.format('\n  '.join(imbalances)))
 
         return is_mass_balanced
 
     def are_reactions_charge_balanced(self, model_path):
         model = wc_lang.io.Reader().run(model_path)
         is_charge_balanced = {}
+        imbalances = []
 
         for reaction in model.get_reactions():
             lhs_charge = 0
@@ -219,5 +225,9 @@ class SubmodelDynamicsTestCase(unittest.TestCase):
                 is_charge_balanced[reaction.id]=True
             else:
                 is_charge_balanced[reaction.id]=False
+                imbalances.append(reaction.id)
+
+        if imbalances:
+            print('The following reactions are not charge balanced:\n  {}'.format('\n  '.join(imbalances)))
 
         return is_charge_balanced
