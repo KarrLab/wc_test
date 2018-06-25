@@ -64,7 +64,7 @@ class TestCore(unittest.TestCase):
         wc_lang.SpeciesType.objects.reset() # reset indexer
 
     def test_reactions_mass_balanced(self):
-        mass_balanced  = wc_test.ModelStaticTestCase().are_reactions_mass_balanced(self.model_path)
+        mass_balanced  = wc_test.ModelStaticTestCase().reactions_mass_balanced(self.model_path)
         # In test model transcription reactions are charge-, but not mass balanced;
         # degradation reactions are mass-, but not charge balanced
         self.assertEqual(mass_balanced['degradation_RNA_1'], True)
@@ -80,7 +80,7 @@ class TestCore(unittest.TestCase):
         wc_lang.SpeciesType.objects.reset()
 
     def test_reactions_charge_balanced(self):
-        charge_balanced = wc_test.ModelStaticTestCase().are_reactions_charge_balanced(self.model_path)
+        charge_balanced = wc_test.ModelStaticTestCase().reactions_charge_balanced(self.model_path)
         # In test model transcription reactions are charge-, but not mass balanced;
         # degradation reactions are mass-, but not charge balanced
         self.assertEqual(charge_balanced['degradation_RNA_1'], False)
