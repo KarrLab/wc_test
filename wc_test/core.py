@@ -25,14 +25,6 @@ class KnowledgeBaseTestCase(unittest.TestCase):
     """
     pass
 
-class ModelGenerationTestCase(unittest.TestCase):
-    """ Test case for model generation
-
-    Attributes:
-        kb (:obj:`wc_kb.KnowledgeBase`): knowledge base
-    """
-    pass
-
 class ModelStaticTestCase(unittest.TestCase):
     """ Test case for static properties of models
     """
@@ -150,19 +142,52 @@ class ModelDynamicsTestCase(unittest.TestCase):
             results_dir (:obj:`str`): path to directory where results will be stored
     """
 
-    def __init__(self, model, checkpoint_period=None, results_dir=None):
+    def __init__(self, model, checkpoint_period=None, _results_dir=None):
         if not isinstance(model, wc_lang.core.Model):
             model = wc_lang.io.Reader().run(model)
 
-        if not results_dir:
-            results_dir = os.path.expanduser('~/tmp/checkpoints_dir/')
+        if not _results_dir:
+            _results_dir = os.path.expanduser('~/tmp/checkpoints_dir/')
 
         if not checkpoint_period:
-            checkpoint_period = 20
+            checkpoint_period = 30
 
         self.model = model
-        self.results_dir = results_dir
+        self._results_dir = _results_dir
         self.checkpoint_period = checkpoint_period
+
+    def setUp(self):
+        self._results_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self._results_dir)
+
+    def simulate(self, end_time, n=None): #NEED TO ADD TEST!
+
+        if not n:
+            n=1
+
+        model = self.model
+        checkpoint_period = self.checkpoint_period
+        results_dir = self._results_dir
+
+        simulation = Simulation(model)
+        for n in range(0,n):
+            num_events, results_dir = simulation.run(end_time=end_time, results_dir=results_dir, checkpoint_period=checkpoint_period)
+
+        run_results = RunResults(results_dir)
+        return run_results
+
+    def get_specie(self, specie_id): #NEED TO ADD TEST!
+        model = self.model
+
+        temp = re.findall('[a-zA-Z_0-9]+', specie_id)
+        specie_type_id = temp[0]
+        compartment_id = temp[1]
+        specie_compartment = model.compartments.get_one(id=compartment_id)
+        specie = model.species_types.get_one(id=specie_type_id).species.get_one(compartment=specie_compartment)
+
+        return specie
 
     def is_constant_species(self, tweak_specie_ids, target_specie_ids, end_time):
         """ Checks whether setting the concentration(s) of tweak_specie_ids to 0, stabilizes (i.e. remains constant) the concentration of
@@ -173,38 +198,23 @@ class ModelDynamicsTestCase(unittest.TestCase):
                 target_species_type (:obj:`wc_lang.SpeciesType`):
                 time (:obj:`float`): time
 
-
             Returns:
                 is_constant (:obj:`list`): list of boolean True and False
                 run_results (:obj:`wc_sim.multialgorithm.run_results.RunResults`): run results
         """
 
-        model = self.model
-        checkpoint_period = self.checkpoint_period
-        results_dir = self.results_dir
-
         # Set concentration of species to 0:
         for tweak_specie_id in tweak_specie_ids:
-            temp = re.findall('[a-zA-Z_0-9]+', tweak_specie_id)
-            tweak_specie_type_id = temp[0]
-            tweak_compartment_id = temp[1]
-            tweak_specie_compartment = model.compartments.get_one(id=tweak_compartment_id)
-            tweak_specie = model.species_types.get_one(id=tweak_specie_type_id).species.get_one(compartment=tweak_specie_compartment)
+            tweak_specie = self.get_specie(tweak_specie_id)
             tweak_specie.concentration.value = 0
 
         # Run model
-        simulation = Simulation(model)
-        num_events, results_dir = simulation.run(end_time = end_time, results_dir = results_dir, checkpoint_period = checkpoint_period)
-        run_results = RunResults(results_dir)
+        run_results = self.simulate(end_time=end_time)
 
         # Check target species concentration at the end of simulation
         is_constant = []
         for target_specie_id in target_specie_ids:
-            temp = re.findall('[a-zA-Z_0-9]+', target_specie_id)
-            target_specie_type_id = temp[0]
-            target_compartment_id = temp[1]
-            target_compartment = model.compartments.get_one(id=target_compartment_id)
-            target_specie = model.species_types.get_one(id=target_specie_type_id).species.get_one(compartment=target_compartment)
+            target_specie = self.get_specie(target_specie_id)
             concentration = run_results.get('populations')[target_specie.id()][:].values #convert panda.series to np.ndarray
 
             if all(concentration[0]==concentration):
@@ -212,73 +222,45 @@ class ModelDynamicsTestCase(unittest.TestCase):
             else:
                 is_constant.append('False')
 
-        return is_constant, run_results
+        return is_constant
 
     def scan_species(self, tweak_specie_ids, target_specie_id, init_concentrations, end_time):
 
-        model = self.model
-        checkpoint_period = self.checkpoint_period
-        results_dir = self.results_dir
-
         final_concentrations=[]
-
-        temp = re.findall('[a-zA-Z_0-9]+', target_specie_id)
-        target_specie_type_id = temp[0]
-        target_compartment_id = temp[1]
-        target_compartment = model.compartments.get_one(id=target_compartment_id)
-        target_specie = model.species_types.get_one(id=target_specie_type_id).species.get_one(compartment=target_compartment)
+        target_specie = self.get_specie(target_specie_id)
 
         for init_concentration in init_concentrations:
             for tweak_specie_id in tweak_specie_ids:
-                temp = re.findall('[a-zA-Z_0-9]+', tweak_specie_id)
-                tweak_specie_type_id = temp[0]
-                tweak_compartment_id = temp[1]
-                tweak_specie_compartment = model.compartments.get_one(id=tweak_compartment_id)
-                tweak_specie = model.species_types.get_one(id=tweak_specie_type_id).species.get_one(compartment=tweak_specie_compartment)
+                tweak_specie = self.get_specie(tweak_specie_id)
                 tweak_specie.concentration.value = init_concentration
 
             # Run model
-            simulation = Simulation(model)
-            num_events, results_dir = simulation.run(end_time = end_time,
-                                                     results_dir = results_dir,
-                                                     checkpoint_period = checkpoint_period)
+            run_results = self.simulate(end_time=end_time)
 
-            run_results = RunResults(results_dir)
             concentrations = run_results.get('populations')[target_specie.id()][:].values
-            final_time = int(end_time/checkpoint_period)
+            final_time = int(end_time/self.checkpoint_period)
             concentration = concentrations[final_time]
             final_concentrations.append(concentration)
 
         return final_concentrations
 
     def is_constant_reactions(self, tweak_reaction_ids, target_specie_ids, end_time):
-        model = self.model
-        checkpoint_period = self.checkpoint_period
-        results_dir = self.results_dir
 
         # Set concentration of species to 0:
         for tweak_reaction_id in tweak_reaction_ids:
-            for reaction in model.get_reactions():
+            for reaction in self.model.get_reactions():
                 if reaction.id == tweak_reaction_id:
                     reaction.rate_laws[0].k_m = 0
                     reaction.rate_laws[0].k_cat = 0
                     break
 
         # Run model
-        simulation = Simulation(model)
-        num_events, results_dir = simulation.run(end_time = end_time,
-                                                 results_dir = results_dir,
-                                                 checkpoint_period = checkpoint_period)
-        run_results = RunResults(results_dir)
+        run_results = self.simulate(end_time=end_time)
 
         # Check target species concentration at the end of simulation
         is_constant = []
         for target_specie_id in target_specie_ids:
-            temp = re.findall('[a-zA-Z_0-9]+', target_specie_id)
-            target_specie_type_id = temp[0]
-            target_compartment_id = temp[1]
-            target_compartment = model.compartments.get_one(id=target_compartment_id)
-            target_specie = model.species_types.get_one(id=target_specie_type_id).species.get_one(compartment=target_compartment)
+            target_specie = self.get_specie(target_specie_id)
             concentration = run_results.get('populations')[target_specie.id()][:].values #convert panda.series to np.ndarray
 
             if all(concentration[0]==concentration):
@@ -286,51 +268,49 @@ class ModelDynamicsTestCase(unittest.TestCase):
             else:
                 is_constant.append('False')
 
-        return is_constant, run_results
+        return is_constant
 
     def scan_reactions(self, tweak_reaction_ids, target_specie_id, k_cats, end_time ):
-        model = self.model
-        checkpoint_period = self.checkpoint_period
-        results_dir = self.results_dir
-
         final_concentrations=[]
-
-        temp = re.findall('[a-zA-Z_0-9]+', target_specie_id)
-        target_specie_type_id = temp[0]
-        target_compartment_id = temp[1]
-        target_compartment = model.compartments.get_one(id=target_compartment_id)
-        target_specie = model.species_types.get_one(id=target_specie_type_id).species.get_one(compartment=target_compartment)
+        target_specie = self.get_specie(target_specie_id)
 
         for k_cat in k_cats:
             # Set concentration of species to 0:
             for tweak_reaction_id in tweak_reaction_ids:
-                for reaction in model.get_reactions():
+                for reaction in self.model.get_reactions():
                     if reaction.id == tweak_reaction_id:
                         reaction.rate_laws[0].k_cat = k_cat
                         break
 
             # Run model
-            simulation = Simulation(model)
-            num_events, results_dir = simulation.run(end_time = end_time,
-                                                     results_dir = results_dir,
-                                                     checkpoint_period = checkpoint_period)
+            run_results = self.simulate(end_time=end_time)
 
-            run_results = RunResults(results_dir)
             concentrations = run_results.get('populations')[target_specie.id()][:].values
-            final_time = int(end_time/checkpoint_period)
+            final_time = int(end_time/self.checkpoint_period)
             concentration = concentrations[final_time]
             final_concentrations.append(concentration)
 
         return final_concentrations
 
-    def run_n_times(self, n, end_time): #NEED TO ADD TEST!
+    def avg_conc_time(self, target_specie_ids, end_time): #NEED TO ADD TEST!
+        avg_conc = {}
 
-        model = self.model
-        checkpoint_period = self.checkpoint_period
-        results_dir = self.results_dir
+        # Run model
+        run_results = self.simulate(end_time=end_time)
 
-        simulation = Simulation(model)
-        for n in range(0,n):
-            num_events, results_dir = simulation.run(end_time=end_time, results_dir=results_dir, checkpoint_period=checkpoint_period)
+        # Calculate avg concentration of target species
+        for target_specie_id in target_specie_ids:
+            target_specie = self.get_specie(target_specie_id)
+            concentration = run_results.get('populations')[target_specie.id()][:].values #convert panda.series to np.ndarray
+            avg_conc[target_specie_id] = concentration.mean()
 
-        run_results = RunResults(results_dir)
+        return avg_conc
+
+    def avg_conc_runs(self, n, target_specie_ids, end_time):
+        pass
+
+    def parameter_scan(self, parameter, end_time):
+        pass
+
+    def get_growth_rate(self, end_time):
+        pass

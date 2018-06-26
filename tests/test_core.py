@@ -19,7 +19,7 @@ class TestCore(unittest.TestCase):
 
     def test_is_constant_species(self):
         tweak_specie_ids = ['ATP[c]']
-        is_constant, run_results = wc_test.ModelDynamicsTestCase(model=self.model_path,
+        is_constant = wc_test.ModelDynamicsTestCase(model=self.model_path,
                                                                  checkpoint_period=10).is_constant_species(
                                                                  tweak_specie_ids=tweak_specie_ids,
                                                                  target_specie_ids=self.target_specie_ids,
@@ -28,7 +28,7 @@ class TestCore(unittest.TestCase):
         wc_lang.SpeciesType.objects.reset() # reset indexer
 
         tweak_specie_ids = ['ATP[c]', 'CTP[c]', 'GTP[c]', 'UTP[c]']
-        is_constant, run_results = wc_test.ModelDynamicsTestCase(model=self.model_path,
+        is_constant = wc_test.ModelDynamicsTestCase(model=self.model_path,
                                                                  checkpoint_period=10).is_constant_species(
                                                                  tweak_specie_ids=tweak_specie_ids,
                                                                  target_specie_ids=self.target_specie_ids,
@@ -39,17 +39,16 @@ class TestCore(unittest.TestCase):
     def test_is_constant_reactions(self):
         tweak_reaction_ids = ['transcription_RNA_4']
         target_specie_ids = ['RNA_1[c]','RNA_2[c]','RNA_3[c]','RNA_4[c]','RNA_5[c]']
-        is_constant, run_results = wc_test.ModelDynamicsTestCase(model=self.model_path,
-                                                                 checkpoint_period=10).is_constant_reactions(
-                                                                 tweak_reaction_ids=tweak_reaction_ids,
-                                                                 target_specie_ids=self.target_specie_ids,
-                                                                 end_time=600)
+        is_constant = wc_test.ModelDynamicsTestCase(model=self.model_path,
+                                                    checkpoint_period=10).is_constant_reactions(
+                                                    tweak_reaction_ids=tweak_reaction_ids,
+                                                    target_specie_ids=self.target_specie_ids,
+                                                    end_time=600)
         self.assertEqual(is_constant, ['False', 'False', 'False', 'True', 'True'])
         wc_lang.SpeciesType.objects.reset() # reset indexer
 
         tweak_reaction_ids = ['transcription_RNA_1', 'transcription_RNA_2', 'transcription_RNA_3', 'transcription_RNA_4', 'transcription_RNA_5']
-        is_constant, run_results = wc_test.ModelDynamicsTestCase(model=self.model_path,
-                                                                 checkpoint_period=10).is_constant_reactions(
+        is_constant = wc_test.ModelDynamicsTestCase(model=self.model_path, checkpoint_period=10).is_constant_reactions(
                                                                  tweak_reaction_ids=tweak_reaction_ids,
                                                                  target_specie_ids=self.target_specie_ids,
                                                                  end_time=600)
@@ -73,7 +72,7 @@ class TestCore(unittest.TestCase):
     def test_scan_species(self):
         init_concentrations = np.linspace(0,20000,6)
         final_concentrations = wc_test.ModelDynamicsTestCase(model=self.model_path,
-                                                             checkpoint_period=10).scan_species(                                                             
+                                                             checkpoint_period=10).scan_species(
                                                              tweak_specie_ids = ['RNA_4[c]'],
                                                              target_specie_id = 'RNA_4[c]',
                                                              init_concentrations = init_concentrations,
