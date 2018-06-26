@@ -142,30 +142,46 @@ class ModelStaticTestCase(unittest.TestCase):
             return False
 
 class ModelDynamicsTestCase(unittest.TestCase):
-    """ Methods for verifying submodels """
+    """ Class to test dynamic properties of models
 
-    def is_constant_species(self, model, end_time, checkpoint_period, tweak_specie_ids, target_specie_ids):
-        """ Checks whether setting the concentration of species_type[compartment] to 0 either:
+        Attributes:
+            model (:obj:`wc_lang.core.Model`) OR (:obj:`str`): model or path to the model file
+            checkpoint_period (:obj:`int`): interval at which results are saved
+            results_dir (:obj:`str`): path to directory where results will be stored
+    """
 
-            * reduces the concentration of specie 'target_id' (instance of 'target_class') to 0 within 'time'
-            * stabilizes (i.e. remains constant) the concentration of target_species_type[target_compartment] within 'time'
-
-            Args:
-                model (:obj:`wc_lang.Model`): model
-                species_type (:obj:`wc_lang.SpeciesType`): species type
-                compartment (:obj:`wc_lang.CompartmentModel`): compartment
-                target_species_type (:obj:`wc_lang.SpeciesType`):
-                target_compartment (:obj:`wc_lang.CompartmentModel`):
-                time (:obj:`float`): time
-                is_constant (:obj:`bool`):
-
-            Returns:
-                :obj:`bool`:
-        """
-
-        # Load model
+    def __init__(self, model, checkpoint_period=None, results_dir=None):
         if not isinstance(model, wc_lang.core.Model):
             model = wc_lang.io.Reader().run(model)
+
+        if not results_dir:
+            results_dir = os.path.expanduser('~/tmp/checkpoints_dir/')
+
+        if not checkpoint_period:
+            checkpoint_period = 20
+
+        self.model = model
+        self.results_dir = results_dir
+        self.checkpoint_period = checkpoint_period
+
+    def is_constant_species(self, tweak_specie_ids, target_specie_ids, end_time):
+        """ Checks whether setting the concentration(s) of tweak_specie_ids to 0, stabilizes (i.e. remains constant) the concentration of
+            target_specie_ids within end_time
+
+            Args:
+                species_type (:obj:`wc_lang.SpeciesType`): species type
+                target_species_type (:obj:`wc_lang.SpeciesType`):
+                time (:obj:`float`): time
+
+
+            Returns:
+                is_constant (:obj:`list`): list of boolean True and False
+                run_results (:obj:`wc_sim.multialgorithm.run_results.RunResults`): run results
+        """
+
+        model = self.model
+        checkpoint_period = self.checkpoint_period
+        results_dir = self.results_dir
 
         # Set concentration of species to 0:
         for tweak_specie_id in tweak_specie_ids:
@@ -177,7 +193,6 @@ class ModelDynamicsTestCase(unittest.TestCase):
             tweak_specie.concentration.value = 0
 
         # Run model
-        results_dir = os.path.expanduser('~/tmp/checkpoints_dir/')
         simulation = Simulation(model)
         num_events, results_dir = simulation.run(end_time = end_time, results_dir = results_dir, checkpoint_period = checkpoint_period)
         run_results = RunResults(results_dir)
@@ -199,10 +214,11 @@ class ModelDynamicsTestCase(unittest.TestCase):
 
         return is_constant, run_results
 
-    def scan_species(self, model, end_time, checkpoint_period, tweak_specie_ids, target_specie_id, init_concentrations):
-        # Load model
-        if not isinstance(model, wc_lang.core.Model):
-            model = wc_lang.io.Reader().run(model)
+    def scan_species(self, tweak_specie_ids, target_specie_id, init_concentrations, end_time):
+
+        model = self.model
+        checkpoint_period = self.checkpoint_period
+        results_dir = self.results_dir
 
         final_concentrations=[]
 
@@ -222,7 +238,6 @@ class ModelDynamicsTestCase(unittest.TestCase):
                 tweak_specie.concentration.value = init_concentration
 
             # Run model
-            results_dir = os.path.expanduser('~/tmp/checkpoints_dir/')
             simulation = Simulation(model)
             num_events, results_dir = simulation.run(end_time = end_time,
                                                      results_dir = results_dir,
@@ -236,10 +251,10 @@ class ModelDynamicsTestCase(unittest.TestCase):
 
         return final_concentrations
 
-    def is_constant_reactions(self, model, end_time, checkpoint_period, tweak_reaction_ids, target_specie_ids):
-        # Load model
-        if not isinstance(model, wc_lang.core.Model):
-            model = wc_lang.io.Reader().run(model)
+    def is_constant_reactions(self, tweak_reaction_ids, target_specie_ids, end_time):
+        model = self.model
+        checkpoint_period = self.checkpoint_period
+        results_dir = self.results_dir
 
         # Set concentration of species to 0:
         for tweak_reaction_id in tweak_reaction_ids:
@@ -250,7 +265,6 @@ class ModelDynamicsTestCase(unittest.TestCase):
                     break
 
         # Run model
-        results_dir = os.path.expanduser('~/tmp/checkpoints_dir/')
         simulation = Simulation(model)
         num_events, results_dir = simulation.run(end_time = end_time,
                                                  results_dir = results_dir,
@@ -274,10 +288,10 @@ class ModelDynamicsTestCase(unittest.TestCase):
 
         return is_constant, run_results
 
-    def scan_reactions(self, model, end_time, checkpoint_period, tweak_reaction_ids, target_specie_id, k_cats):
-        # Load model
-        if not isinstance(model, wc_lang.core.Model):
-            model = wc_lang.io.Reader().run(model)
+    def scan_reactions(self, tweak_reaction_ids, target_specie_id, k_cats, end_time ):
+        model = self.model
+        checkpoint_period = self.checkpoint_period
+        results_dir = self.results_dir
 
         final_concentrations=[]
 
@@ -296,7 +310,6 @@ class ModelDynamicsTestCase(unittest.TestCase):
                         break
 
             # Run model
-            results_dir = os.path.expanduser('~/tmp/checkpoints_dir/')
             simulation = Simulation(model)
             num_events, results_dir = simulation.run(end_time = end_time,
                                                      results_dir = results_dir,
@@ -309,3 +322,15 @@ class ModelDynamicsTestCase(unittest.TestCase):
             final_concentrations.append(concentration)
 
         return final_concentrations
+
+    def run_n_times(self, n, end_time): #NEED TO ADD TEST!
+
+        model = self.model
+        checkpoint_period = self.checkpoint_period
+        results_dir = self.results_dir
+
+        simulation = Simulation(model)
+        for n in range(0,n):
+            num_events, results_dir = simulation.run(end_time=end_time, results_dir=results_dir, checkpoint_period=checkpoint_period)
+
+        run_results = RunResults(results_dir)
