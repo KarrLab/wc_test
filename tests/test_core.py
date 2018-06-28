@@ -34,6 +34,17 @@ class ModelTestCaseTests(unittest.TestCase):
         self.assertEqual(test_case2.checkpoint_period, 20)
         self.assertEqual(test_case2._results_dir, '/home/test')
 
+    def test_select_submodels(self):
+
+        test_case = wc_test.DynamicTestCase(model=self.model_path)
+        mod_submodels={'transcription':True, 'degradation':False}
+        test_case.select_submodels(mod_submodels = mod_submodels)
+
+        for reaction in test_case.model.get_reactions():
+            if mod_submodels[reaction.submodel.id] == False:
+                print(reaction.submodel.id)
+                self.assertEqual(reaction.rate_laws[0].k_cat, 0)
+
     def test_get_specie(self):
         specie = wc_test.ModelTestCase(model=self.model_path).get_specie('RNA_1[c]')
         self.assertIsInstance(specie, wc_lang.core.Species)
@@ -52,10 +63,96 @@ class ModelTestCaseTests(unittest.TestCase):
         self.assertIsInstance(reaction, wc_lang.core.Reaction)
         self.assertEqual(reaction.id, 'degradation_RNA_1')
 
-class StaticTestCaseTests(unittest.TestCase):
-    model_path = 'tests/fixtures/min_model.xlsx'
+    def test_perturb_parameters(self):
+
+        test_case = wc_test.ModelTestCase(model=self.model_path)
+        self.assertEqual(test_case.model.parameters.get_one(id='cell_cycle_length').value, 28800)
+        self.assertEqual(test_case.model.parameters.get_one(id='fractionDryWeight').value, 0.7)
+
+        mod_parameters={'cell_cycle_length':5,'fractionDryWeight':5}
+        test_case.perturb_parameters(mod_parameters=mod_parameters)
+
+        self.assertEqual(test_case.model.parameters.get_one(id='cell_cycle_length').value, 5)
+        self.assertEqual(test_case.model.parameters.get_one(id='fractionDryWeight').value, 5)
+
+    def test_perturb_species(self):
+
+        test_case = wc_test.ModelTestCase(model=self.model_path)
+        self.assertEqual(test_case.get_specie('RNA_1[c]').concentration.value, 1000)
+        self.assertEqual(test_case.get_specie('RNA_2[c]').concentration.value, 1000)
+
+        mod_species={'RNA_1[c]':444,'RNA_2[c]':555}
+        test_case.perturb_species(mod_species=mod_species)
+
+        self.assertEqual(test_case.get_specie('RNA_1[c]').concentration.value, 444)
+        self.assertEqual(test_case.get_specie('RNA_2[c]').concentration.value, 555)
+
+    def test_perturb_reactions(self):
+
+        test_case = wc_test.ModelTestCase(model=self.model_path)
+        self.assertEqual(test_case.get_reaction('transcription_RNA_1').rate_laws[0].k_cat, 0.05)
+        self.assertEqual(test_case.get_reaction('degradation_RNA_1').rate_laws[0].k_cat, 0.035)
+
+        mod_reactions={'transcription_RNA_1':5, 'degradation_RNA_1':6}
+        test_case.perturb_reactions(mod_reactions=mod_reactions)
+
+        self.assertEqual(test_case.get_reaction('transcription_RNA_1').rate_laws[0].k_cat, 5)
+        self.assertEqual(test_case.get_reaction('degradation_RNA_1').rate_laws[0].k_cat, 6)
+
+    def test_scan_parameters(self):
+        """ Function to be built """
+        pass
+
+    def test_scan_species(self):
+        """ Function to be built """
+        pass
+
+    def test_scan_reactions(self):
+        """ Function to be built """
+        pass
+
+class StaticTestCaseTests(ModelTestCaseTests):
     # In test model transcription reactions are charge-, but not mass balanced;
     # degradation reactions are mass-, but not charge balanced
+
+    def test_check_init_compartment_volumes(self):
+
+        bounds=[0, 0.000000001]
+        test_case = wc_test.StaticTestCase(model=self.model_path)
+        results = test_case.check_init_compartment_volumes(bounds=bounds)
+        self.assertEqual(all(list(results.values())), True)
+
+        mod_comp_id = test_case.model.compartments[0].id
+        test_case.model.compartments[0].initial_volume = 1
+        results = test_case.check_init_compartment_volumes(bounds=bounds)
+
+        self.assertEqual(all(list(results.values())), False)
+        for result_key in results.keys():
+            if result_key == mod_comp_id:
+                self.assertEqual(results[result_key], False)
+            else:
+                self.assertEqual(results[result_key], True)
+
+    def test_check_init_species_types_charges(self):
+
+        bounds=[-200, 200]
+        test_case = wc_test.StaticTestCase(model=self.model_path)
+        results = test_case.check_init_species_types_charges(bounds=bounds)
+        self.assertEqual(all(list(results.values())), True)
+
+        mod_species_types_id = test_case.model.species_types[0].id
+        test_case.model.species_types[0].charge = 500
+        results = test_case.check_init_species_types_charges(bounds=bounds)
+
+        self.assertEqual(all(list(results.values())), False)
+        for result_key in results.keys():
+            if result_key == mod_species_types_id:
+                self.assertEqual(results[result_key], False)
+            else:
+                self.assertEqual(results[result_key], True)
+
+    def test_check_init_species_types_weights(self):
+        pass
 
     def test_is_mass_balanced(self):
         self.assertTrue(wc_test.StaticTestCase(model=self.model_path).is_mass_balanced('degradation_RNA_1'))
@@ -96,9 +193,8 @@ class StaticTestCaseTests(unittest.TestCase):
         self.assertEqual(charge_balanced['transcription_RNA_4'], True)
         self.assertEqual(charge_balanced['transcription_RNA_5'], True)
 
-class DynamicTestCaseTests(unittest.TestCase):
+class DynamicTestCaseTests(ModelTestCaseTests):
     model_path = 'tests/fixtures/min_model.xlsx'
-    target_specie_ids = ['RNA_1[c]','RNA_2[c]','RNA_3[c]','RNA_4[c]','RNA_5[c]']
 
     def test_simulate(self):
         results = wc_test.DynamicTestCase(model=self.model_path).simulate(end_time=300)
@@ -111,54 +207,6 @@ class DynamicTestCaseTests(unittest.TestCase):
         self.assertIsInstance(results, list)
         self.assertIsInstance(results[0], wc_sim.multialgorithm.run_results.RunResults)
         self.assertIsInstance(results[1], wc_sim.multialgorithm.run_results.RunResults)
-
-    def test_perturb_parameters(self):
-
-        test_case = wc_test.DynamicTestCase(model=self.model_path)
-        self.assertEqual(test_case.model.parameters.get_one(id='cell_cycle_length').value, 28800)
-        self.assertEqual(test_case.model.parameters.get_one(id='fractionDryWeight').value, 0.7)
-
-        mod_parameters={'cell_cycle_length':5,'fractionDryWeight':5}
-        test_case.perturb_parameters(mod_parameters=mod_parameters)
-
-        self.assertEqual(test_case.model.parameters.get_one(id='cell_cycle_length').value, 5)
-        self.assertEqual(test_case.model.parameters.get_one(id='fractionDryWeight').value, 5)
-
-    def test_perturb_species(self):
-
-        test_case = wc_test.DynamicTestCase(model=self.model_path)
-        self.assertEqual(test_case.get_specie('RNA_1[c]').concentration.value, 1000)
-        self.assertEqual(test_case.get_specie('RNA_2[c]').concentration.value, 1000)
-
-        mod_species={'RNA_1[c]':444,'RNA_2[c]':555}
-        test_case.perturb_species(mod_species=mod_species)
-
-        self.assertEqual(test_case.get_specie('RNA_1[c]').concentration.value, 444)
-        self.assertEqual(test_case.get_specie('RNA_2[c]').concentration.value, 555)
-
-    def test_perturb_reactions(self):
-
-        test_case = wc_test.DynamicTestCase(model=self.model_path)
-        self.assertEqual(test_case.get_reaction('transcription_RNA_1').rate_laws[0].k_cat, 0.05)
-        self.assertEqual(test_case.get_reaction('degradation_RNA_1').rate_laws[0].k_cat, 0.035)
-
-        mod_reactions={'transcription_RNA_1':5, 'degradation_RNA_1':6}
-        test_case.perturb_reactions(mod_reactions=mod_reactions)
-
-        self.assertEqual(test_case.get_reaction('transcription_RNA_1').rate_laws[0].k_cat, 5)
-        self.assertEqual(test_case.get_reaction('degradation_RNA_1').rate_laws[0].k_cat, 6)
-
-    def test_scan_parameters(self):
-        """ Function to be built """
-        pass
-
-    def test_scan_species(self):
-        """ Function to be built """
-        pass
-
-    def test_scan_reactions(self):
-        """ Function to be built """
-        pass
 
     def test_delta_conc(self):
         #test_case = wc_test.DynamicTestCase(model=self.model_path)

@@ -8,6 +8,7 @@
 TODO:
 - use deepcopy to modify copies of models, rather than modify base model
 - all reaction methods: currently len(rate_law)=1 assumed, generalize
+- Currently KnowledgebaseChecks acts on the model, not the KB;
 """
 
 import os
@@ -48,17 +49,70 @@ class ModelTestCase(unittest.TestCase):
             if reaction.id == reaction_id:
                 return reaction
 
-class KnowledgeBaseTestCase(ModelTestCase):
-    """ Test case for a knowledge base
+    def select_submodels(self, mod_submodels):
+        """ Turn off all submodels, except the ones listed in submodel_ids """
 
-    Attributes:
-        kb (:obj:`wc_kb.KnowledgeBase`): knowledge base
-    """
-    pass
+        for submodel in self.model.submodels:
+            if mod_submodels[submodel.id] == True:
+                continue
+            else:
+                for reaction in submodel.reactions:
+                    reaction.rate_laws[0].k_cat=0
+
+    """ Methods to perturb model """
+    def perturb_parameters(self, mod_parameters):
+
+        for parameter_id in mod_parameters.keys():
+            self.model.parameters.get_one(id=parameter_id).value = mod_parameters[parameter_id]
+
+    def perturb_species(self, mod_species):
+
+        for specie_id in mod_species.keys():
+            self.get_specie(specie_id).concentration.value = mod_species[specie_id]
+
+    def perturb_reactions(self, mod_reactions):
+        for reaction_id in mod_reactions.keys():
+            reaction = self.get_reaction(reaction_id)
+            reaction.rate_laws[0].k_cat = mod_reactions[reaction_id]
+
+    def scan_parameters(self, mod_parameters):
+        """ TODO; low level methods ready  """
+        pass
+
+    def scan_species(self, mod_species):
+        """ TODO; low level methods ready  """
+        pass
+
+    def scan_reactions(self, mod_reactions):
+        """ TODO; low level methods ready  """
+        pass
 
 class StaticTestCase(ModelTestCase):
-    """ Test case for static properties of models
-    """
+    """ Test case for static properties of models """
+
+    def check_init_compartment_volumes(self, bounds):
+        check_bounds={}
+        for compartment in self.model.compartments:
+            if bounds[0] < compartment.initial_volume < bounds[1]:
+                check_bounds[compartment.id]=True
+            else:
+                check_bounds[compartment.id]=False
+        return check_bounds
+
+    def check_init_species_types_charges(self, bounds):
+        check_bounds={}
+        for species_type in self.model.species_types:
+            if bounds[0] < species_type.charge < bounds[1]:
+                check_bounds[species_type.id]=True
+            else:
+                check_bounds[species_type.id]=False
+        return check_bounds
+
+    def check_init_species_types_weights(self, bounds):
+        pass
+
+    def check_init_reaction_rate_laws(self, bounds):
+        pass
 
     def reactions_mass_balanced(self):
         """ Testing whether reactions in the model are mass balanced.
@@ -186,33 +240,7 @@ class DynamicTestCase(ModelTestCase):
             results.append(run_results)
         return results
 
-    """ Methods to perturb model """
-    def perturb_parameters(self, mod_parameters):
 
-        for parameter in mod_parameters:
-            self.model.parameters.get_one(id=parameter).value = mod_parameters[parameter]
-
-    def perturb_species(self, mod_species):
-
-        for specie in mod_species.keys():
-            self.get_specie(specie).concentration.value = mod_species[specie]
-
-    def perturb_reactions(self, mod_reactions):
-        for reaction_id in mod_reactions.keys():
-            reaction = self.get_reaction(reaction_id)
-            reaction.rate_laws[0].k_cat = mod_reactions[reaction_id]
-
-    def scan_parameters(self, mod_parameters):
-        """ TODO; low level methods ready  """
-        pass
-
-    def scan_species(self, mod_species):
-        """ TODO; low level methods ready  """
-        pass
-
-    def scan_reactions(self, mod_reactions):
-        """ TODO; low level methods ready  """
-        pass
 
     """ Methods to obtain numbers to compare to exp data """
     def delta_conc(self, species, run_results):

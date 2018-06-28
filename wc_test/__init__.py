@@ -1,6 +1,6 @@
 import pkg_resources
 from .core import ModelTestCase
-from .core import KnowledgeBaseTestCase
+#from .core import KnowledgeBaseTestCase
 from .core import StaticTestCase
 from .core import DynamicTestCase
 
