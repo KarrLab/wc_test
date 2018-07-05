@@ -102,17 +102,29 @@ class StaticTestCase(ModelTestCase):
     def check_init_species_types_charges(self, bounds):
         check_bounds={}
         for species_type in self.model.species_types:
-            if bounds[0] < species_type.charge < bounds[1]:
+            if bounds[0] <= species_type.charge <= bounds[1]:
                 check_bounds[species_type.id]=True
             else:
                 check_bounds[species_type.id]=False
         return check_bounds
 
     def check_init_species_types_weights(self, bounds):
-        pass
+        check_bounds={}
+        for species_type in self.model.species_types:
+            if bounds[0] <= species_type.molecular_weight <= bounds[1]:
+                check_bounds[species_type.id] = True
+            else:
+                check_bounds[species_type.id] = False
+        return check_bounds
 
-    def check_init_reaction_rate_laws(self, bounds):
-        pass
+    def check_init_reactions_rates(self, bounds):
+        check_bounds={}
+        for reaction in self.model.get_reactions():
+            if bounds[0] <= reaction.rate_laws[0].k_cat <= bounds[1]:
+                check_bounds[reaction.id] = True
+            else:
+                check_bounds[reaction.id] = False
+        return check_bounds
 
     def reactions_mass_balanced(self):
         """ Testing whether reactions in the model are mass balanced.
@@ -239,8 +251,6 @@ class DynamicTestCase(ModelTestCase):
             run_results = RunResults(results_dir)
             results.append(run_results)
         return results
-
-
 
     """ Methods to obtain numbers to compare to exp data """
     def delta_conc(self, species, run_results):

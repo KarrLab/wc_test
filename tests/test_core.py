@@ -134,7 +134,6 @@ class StaticTestCaseTests(ModelTestCaseTests):
                 self.assertEqual(results[result_key], True)
 
     def test_check_init_species_types_charges(self):
-
         bounds=[-200, 200]
         test_case = wc_test.StaticTestCase(model=self.model_path)
         results = test_case.check_init_species_types_charges(bounds=bounds)
@@ -152,7 +151,38 @@ class StaticTestCaseTests(ModelTestCaseTests):
                 self.assertEqual(results[result_key], True)
 
     def test_check_init_species_types_weights(self):
-        pass
+        bounds=[0, 3000]
+        test_case = wc_test.StaticTestCase(model=self.model_path)
+        results = test_case.check_init_species_types_weights(bounds=bounds)
+        self.assertEqual(all(list(results.values())), True)
+
+        mod_species_types_id = test_case.model.species_types[0].id
+        test_case.model.species_types[0].molecular_weight = -100
+        results = test_case.check_init_species_types_weights(bounds=bounds)
+
+        self.assertEqual(all(list(results.values())), False)
+        for result_key in results.keys():
+            if result_key == mod_species_types_id:
+                self.assertEqual(results[result_key], False)
+            else:
+                self.assertEqual(results[result_key], True)
+
+    def test_check_init_reactions_rates(self):
+        bounds=[0, 10] # What is a phyisologically realistic bound?
+        test_case = wc_test.StaticTestCase(model=self.model_path)
+        results = test_case.check_init_reactions_rates(bounds=bounds)
+        self.assertEqual(all(list(results.values())), True)
+
+        mod_reaction = test_case.model.get_reactions()[0].id
+        test_case.model.get_reactions()[0].rate_laws[0].k_cat = -1
+        results = test_case.check_init_reactions_rates(bounds=bounds)        
+
+        self.assertEqual(all(list(results.values())), False)
+        for result_key in results.keys():
+            if result_key == mod_reaction:
+                self.assertEqual(results[result_key], False)
+            else:
+                self.assertEqual(results[result_key], True)
 
     def test_is_mass_balanced(self):
         self.assertTrue(wc_test.StaticTestCase(model=self.model_path).is_mass_balanced('degradation_RNA_1'))
