@@ -99,18 +99,6 @@ class ModelTestCaseTests(unittest.TestCase):
         self.assertEqual(test_case.get_reaction('transcription_RNA_1').rate_laws[0].k_cat, 5)
         self.assertEqual(test_case.get_reaction('degradation_RNA_1').rate_laws[0].k_cat, 6)
 
-    def test_scan_parameters(self):
-        """ Function to be built """
-        pass
-
-    def test_scan_species(self):
-        """ Function to be built """
-        pass
-
-    def test_scan_reactions(self):
-        """ Function to be built """
-        pass
-
 class StaticTestCaseTests(ModelTestCaseTests):
     # In test model transcription reactions are charge-, but not mass balanced;
     # degradation reactions are mass-, but not charge balanced
@@ -134,7 +122,6 @@ class StaticTestCaseTests(ModelTestCaseTests):
                 self.assertEqual(results[result_key], True)
 
     def test_check_init_species_types_charges(self):
-
         bounds=[-200, 200]
         test_case = wc_test.StaticTestCase(model=self.model_path)
         results = test_case.check_init_species_types_charges(bounds=bounds)
@@ -152,7 +139,38 @@ class StaticTestCaseTests(ModelTestCaseTests):
                 self.assertEqual(results[result_key], True)
 
     def test_check_init_species_types_weights(self):
-        pass
+        bounds=[0, 3000]
+        test_case = wc_test.StaticTestCase(model=self.model_path)
+        results = test_case.check_init_species_types_weights(bounds=bounds)
+        self.assertEqual(all(list(results.values())), True)
+
+        mod_species_types_id = test_case.model.species_types[0].id
+        test_case.model.species_types[0].molecular_weight = -100
+        results = test_case.check_init_species_types_weights(bounds=bounds)
+
+        self.assertEqual(all(list(results.values())), False)
+        for result_key in results.keys():
+            if result_key == mod_species_types_id:
+                self.assertEqual(results[result_key], False)
+            else:
+                self.assertEqual(results[result_key], True)
+
+    def test_check_init_reactions_rates(self):
+        bounds=[0, 10] # What is a phyisologically realistic bound?
+        test_case = wc_test.StaticTestCase(model=self.model_path)
+        results = test_case.check_init_reactions_rates(bounds=bounds)
+        self.assertEqual(all(list(results.values())), True)
+
+        mod_reaction = test_case.model.get_reactions()[0].id
+        test_case.model.get_reactions()[0].rate_laws[0].k_cat = -1
+        results = test_case.check_init_reactions_rates(bounds=bounds)
+
+        self.assertEqual(all(list(results.values())), False)
+        for result_key in results.keys():
+            if result_key == mod_reaction:
+                self.assertEqual(results[result_key], False)
+            else:
+                self.assertEqual(results[result_key], True)
 
     def test_is_mass_balanced(self):
         self.assertTrue(wc_test.StaticTestCase(model=self.model_path).is_mass_balanced('degradation_RNA_1'))
@@ -225,5 +243,44 @@ class DynamicTestCaseTests(ModelTestCaseTests):
     def test_get_growth_rate(self):
         """ Function to be built """
         pass
+
+    def test_sim_scan_parameters(self):
+        test_case = wc_test.DynamicTestCase(model=self.model_path)
+
+        mod_parameters={'cell_cycle_length':[5],'fractionDryWeight':[5]}
+        scan_results = test_case.sim_scan_parameters(mod_parameters=mod_parameters, end_time=600)
+        self.assertIsInstance(scan_results, list)
+        self.assertIsInstance(scan_results[0], wc_sim.multialgorithm.run_results.RunResults)
+
+        mod_parameters={'cell_cycle_length':[5,6,7], 'fractionDryWeight':[8,9,10]}
+        scan_results = test_case.sim_scan_parameters(mod_parameters=mod_parameters, end_time=600)
+        self.assertIsInstance(scan_results, list)
+        self.assertIsInstance(scan_results[0], wc_sim.multialgorithm.run_results.RunResults)
+
+    def test_sim_scan_species(self):
+        test_case = wc_test.DynamicTestCase(model=self.model_path)
+
+        mod_species={'RNA_1[c]':[5]}
+        scan_results = test_case.sim_scan_species(mod_species=mod_species, end_time=600)
+        self.assertIsInstance(scan_results, list)
+        self.assertIsInstance(scan_results[0], wc_sim.multialgorithm.run_results.RunResults)
+
+        mod_parameters={'RNA_1[c]':[5,6,7], 'RNA_2[c]':[8,9,10]}
+        scan_results = test_case.sim_scan_species(mod_species=mod_species, end_time=600)
+        self.assertIsInstance(scan_results, list)
+        self.assertIsInstance(scan_results[0], wc_sim.multialgorithm.run_results.RunResults)
+
+    def test_sim_scan_reactions(self):
+        test_case = wc_test.DynamicTestCase(model=self.model_path)
+
+        mod_reactions={'transcription_RNA_1':[0.65]}
+        scan_results = test_case.sim_scan_reactions(mod_reactions=mod_reactions, end_time=600)
+        self.assertIsInstance(scan_results, list)
+        self.assertIsInstance(scan_results[0], wc_sim.multialgorithm.run_results.RunResults)
+
+        mod_reactions={'transcription_RNA_1':[0.55, 0.65, 0.75], 'degradation_RNA_1':[0.35, 0.45, 0.55]}
+        scan_results = test_case.sim_scan_reactions(mod_reactions=mod_reactions, end_time=600)
+        self.assertIsInstance(scan_results, list)
+        self.assertIsInstance(scan_results[0], wc_sim.multialgorithm.run_results.RunResults)
 
 # wc_lang.SpeciesType.objects.reset() # reset indexer

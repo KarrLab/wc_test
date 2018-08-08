@@ -6,9 +6,8 @@
 :License: MIT
 
 TODO:
-- use deepcopy to modify copies of models, rather than modify base model
 - all reaction methods: currently len(rate_law)=1 assumed, generalize
-- Currently KnowledgebaseChecks acts on the model, not the KB;
+- mod_parameters values are INTs in perturb_methods, but LISTs for sim_scan methods, synchornize
 """
 
 import os
@@ -62,30 +61,18 @@ class ModelTestCase(unittest.TestCase):
     """ Methods to perturb model """
     def perturb_parameters(self, mod_parameters):
 
-        for parameter_id in mod_parameters.keys():
+        for parameter_id in mod_parameters:
             self.model.parameters.get_one(id=parameter_id).value = mod_parameters[parameter_id]
 
     def perturb_species(self, mod_species):
 
-        for specie_id in mod_species.keys():
+        for specie_id in mod_species:
             self.get_specie(specie_id).concentration.value = mod_species[specie_id]
 
     def perturb_reactions(self, mod_reactions):
-        for reaction_id in mod_reactions.keys():
+        for reaction_id in mod_reactions:
             reaction = self.get_reaction(reaction_id)
             reaction.rate_laws[0].k_cat = mod_reactions[reaction_id]
-
-    def scan_parameters(self, mod_parameters):
-        """ TODO; low level methods ready  """
-        pass
-
-    def scan_species(self, mod_species):
-        """ TODO; low level methods ready  """
-        pass
-
-    def scan_reactions(self, mod_reactions):
-        """ TODO; low level methods ready  """
-        pass
 
 class StaticTestCase(ModelTestCase):
     """ Test case for static properties of models """
@@ -102,17 +89,29 @@ class StaticTestCase(ModelTestCase):
     def check_init_species_types_charges(self, bounds):
         check_bounds={}
         for species_type in self.model.species_types:
-            if bounds[0] < species_type.charge < bounds[1]:
+            if bounds[0] <= species_type.charge <= bounds[1]:
                 check_bounds[species_type.id]=True
             else:
                 check_bounds[species_type.id]=False
         return check_bounds
 
     def check_init_species_types_weights(self, bounds):
-        pass
+        check_bounds={}
+        for species_type in self.model.species_types:
+            if bounds[0] <= species_type.molecular_weight <= bounds[1]:
+                check_bounds[species_type.id] = True
+            else:
+                check_bounds[species_type.id] = False
+        return check_bounds
 
-    def check_init_reaction_rate_laws(self, bounds):
-        pass
+    def check_init_reactions_rates(self, bounds):
+        check_bounds={}
+        for reaction in self.model.get_reactions():
+            if bounds[0] <= reaction.rate_laws[0].k_cat <= bounds[1]:
+                check_bounds[reaction.id] = True
+            else:
+                check_bounds[reaction.id] = False
+        return check_bounds
 
     def reactions_mass_balanced(self):
         """ Testing whether reactions in the model are mass balanced.
@@ -240,8 +239,6 @@ class DynamicTestCase(ModelTestCase):
             results.append(run_results)
         return results
 
-
-
     """ Methods to obtain numbers to compare to exp data """
     def delta_conc(self, species, run_results):
 
@@ -272,3 +269,66 @@ class DynamicTestCase(ModelTestCase):
 
     def get_growth_rate(self, end_time):
         pass
+
+    def sim_scan_parameters(self, mod_parameters, end_time):
+
+        # Check if all dictionary values have same length
+        lengths=[]
+        for parameter_id in mod_parameters:
+             lengths.append(len(mod_parameters[parameter_id]))
+
+        if lengths.count(lengths[0]) != len(lengths):
+            raise SyntaxError('All values of mod_parameters should be a list with equal length')
+
+        # Step over the defined parameter values and
+        scan_results = []
+        for value_index in range(0, lengths[0]): # step over each paramater value
+            for parameter_id in mod_parameters: # step over each parameters
+                self.model.parameters.get_one(id=parameter_id).value = mod_parameters[parameter_id][value_index]
+
+            run_result = self.simulate(end_time=end_time)[0]
+            scan_results.append(run_result)
+
+        return scan_results
+
+    def sim_scan_species(self, mod_species, end_time):
+
+        # Check if all dictionary values have same length
+        lengths=[]
+        for species_id in mod_species:
+             lengths.append(len(mod_species[species_id]))
+
+        if lengths.count(lengths[0]) != len(lengths):
+            raise SyntaxError('All values of mod_species should be a list with equal length')
+
+        # Step over the defined parameter values and
+        scan_results = []
+        for value_index in range(0, lengths[0]): # step over each paramater value
+            for specie_id in mod_species: # step over each parameters
+                self.get_specie(specie_id).concentration.value = mod_species[specie_id][value_index]
+
+            run_result = self.simulate(end_time=end_time)[0]
+            scan_results.append(run_result)
+
+        return scan_results
+
+    def sim_scan_reactions(self, mod_reactions, end_time):
+        # Check if all dictionary values have same length
+        lengths=[]
+        for reactions_id in mod_reactions:
+             lengths.append(len(mod_reactions[reactions_id]))
+
+        if lengths.count(lengths[0]) != len(lengths):
+            raise SyntaxError('All values of mod_reactions should be a list with equal length')
+
+        # Step over the defined parameter values and
+        scan_results = []
+        for value_index in range(0, lengths[0]): # step over each paramater value
+            for reaction_id in mod_reactions: # step over each parameters
+                reaction = self.get_reaction(reaction_id)
+                reaction.rate_laws[0].k_cat = mod_reactions[reaction_id][value_index]
+
+            run_result = self.simulate(end_time=end_time)[0]
+            scan_results.append(run_result)
+
+        return scan_results
