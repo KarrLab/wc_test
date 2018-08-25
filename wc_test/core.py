@@ -6,7 +6,7 @@
 :License: MIT
 
 TODO:
-- all reaction methods: currently len(rate_law)=1 assumed, generalize
+- all reaction methods: currently len(rate_laws)=1 assumed, generalize
 - mod_parameters values are INTs in perturb_methods, but LISTs for sim_scan methods, synchornize
 """
 
