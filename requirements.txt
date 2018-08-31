@@ -1,4 +1,4 @@
-cement # for command line programs
+cement >= 3.0.0 # for command line programs
 git+https://github.com/KarrLab/wc_kb.git#egg=wc_kb-0.0.1[all]
 git+https://github.com/KarrLab/wc_lang.git#egg=wc_lang-0.0.1[all]
 git+https://github.com/KarrLab/wc_model_gen.git#egg=wc_model_gen-0.0.1[all]
