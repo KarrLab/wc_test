@@ -48,11 +48,11 @@ class ModelTestCaseTests(unittest.TestCase):
     def test_get_specie(self):
         specie = wc_test.ModelTestCase(model=self.model_path).get_specie('RNA_1[c]')
         self.assertIsInstance(specie, wc_lang.core.Species)
-        self.assertEqual(specie.id(), 'RNA_1[c]')
+        self.assertEqual(specie.id, 'RNA_1[c]')
 
         specie = wc_test.ModelTestCase(model=self.model_path).get_specie('C[c]')
         self.assertIsInstance(specie, wc_lang.core.Species)
-        self.assertEqual(specie.id(), 'C[c]')
+        self.assertEqual(specie.id, 'C[c]')
 
     def test_get_reaction(self):
         reaction = wc_test.ModelTestCase(model=self.model_path).get_reaction('transcription_RNA_1')

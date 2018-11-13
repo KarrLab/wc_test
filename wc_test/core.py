@@ -245,7 +245,7 @@ class DynamicTestCase(ModelTestCase):
         delta_conc = {}
         for specie_id in species:
             specie = self.get_specie(specie_id)
-            concentration = run_results.get('populations')[specie.id()].values
+            concentration = run_results.get('populations')[specie.id].values
             delta_conc[specie_id] = concentration[len(concentration)-1]-concentration[0]
 
         return delta_conc
@@ -259,7 +259,7 @@ class DynamicTestCase(ModelTestCase):
         # Calculate avg concentration of target species
         for target_specie_id in target_specie_ids:
             target_specie = self.get_specie(target_specie_id)
-            concentration = run_results.get('populations')[target_specie.id()][:].values #convert panda.series to np.ndarray
+            concentration = run_results.get('populations')[target_specie.id][:].values #convert panda.series to np.ndarray
             avg_conc[target_specie_id] = concentration.mean()
 
         return avg_conc
