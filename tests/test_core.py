@@ -72,13 +72,13 @@ class ModelTestCaseTests(unittest.TestCase):
 
     def test_perturb_parameter_values(self):
         test_case = wc_test.ModelTestCase(model=self.MODEL_PATH)
-        self.assertEqual(test_case.model.parameters.get_one(id='cell_cycle_length').value, 28800)
+        self.assertEqual(test_case.model.parameters.get_one(id='cell_cycle_len').value, 28800)
         self.assertEqual(test_case.model.parameters.get_one(id='fractionDryWeight').value, 0.7)
 
-        mod_parameters = {'cell_cycle_length': 5, 'fractionDryWeight': 5}
+        mod_parameters = {'cell_cycle_len': 5, 'fractionDryWeight': 5}
         test_case.perturb_parameter_values(mod_parameters=mod_parameters)
 
-        self.assertEqual(test_case.model.parameters.get_one(id='cell_cycle_length').value, 5)
+        self.assertEqual(test_case.model.parameters.get_one(id='cell_cycle_len').value, 5)
         self.assertEqual(test_case.model.parameters.get_one(id='fractionDryWeight').value, 5)
 
     def test_perturb_species_mean_init_concentrations(self):
@@ -149,12 +149,12 @@ class DynamicTestCaseTests(ModelTestCaseTests):
     def test_sim_scan_parameters(self):
         test_case = wc_test.DynamicTestCase(model=self.MODEL_PATH)
 
-        mod_parameters = {'cell_cycle_length': [5], 'fractionDryWeight': [5]}
+        mod_parameters = {'cell_cycle_len': [5], 'fractionDryWeight': [5]}
         scan_results = test_case.sim_scan_parameters(mod_parameters=mod_parameters, end_time=600)
         self.assertIsInstance(scan_results, list)
         self.assertIsInstance(scan_results[0], wc_sim.multialgorithm.run_results.RunResults)
 
-        mod_parameters = {'cell_cycle_length': [5, 6, 7], 'fractionDryWeight': [8, 9, 10]}
+        mod_parameters = {'cell_cycle_len': [5, 6, 7], 'fractionDryWeight': [8, 9, 10]}
         scan_results = test_case.sim_scan_parameters(mod_parameters=mod_parameters, end_time=600)
         self.assertIsInstance(scan_results, list)
         self.assertIsInstance(scan_results[0], wc_sim.multialgorithm.run_results.RunResults)
