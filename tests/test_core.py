@@ -14,6 +14,7 @@ TODO:
 
 import os
 import unittest
+import wc_kb
 import wc_kb.io
 import wc_lang
 import wc_lang.io
@@ -26,7 +27,7 @@ class KnowledgeBaseTestCaseTestCase(unittest.TestCase):
 
     @unittest.skip('Todo')
     def setUp(self):
-        self.kb = wc_kb.io.Reader().run(self.KB_PATH)
+        self.kb = wc_kb.io.Reader().run(self.KB_PATH)[wc_kb.KnowledgeBase][0]
 
         class TestCase(wc_test.core.KnowledgeBaseTestCase):
             KB = self.kb
@@ -39,7 +40,7 @@ class ModelTestCaseTestCase(unittest.TestCase):
     MODEL_PATH = 'tests/fixtures/min_model.xlsx'
 
     def setUp(self):
-        self.model = wc_lang.io.Reader().run(self.MODEL_PATH)
+        self.model = wc_lang.io.Reader().run(self.MODEL_PATH)[wc_lang.Model][0]
 
         class TestCase(wc_test.core.ModelTestCase):
             MODEL = self.model
@@ -123,7 +124,7 @@ class SimulationTestCaseTestCase(unittest.TestCase):
     MODEL_PATH = 'tests/fixtures/min_model.xlsx'
 
     def setUp(self):
-        self.model = wc_lang.io.Reader().run(self.MODEL_PATH)
+        self.model = wc_lang.io.Reader().run(self.MODEL_PATH)[wc_lang.Model][0]
 
         class TestCase(wc_test.core.SimulationTestCase):
             MODEL = self.model

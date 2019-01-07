@@ -37,7 +37,7 @@ class KnowledgeBaseTestCase(unittest.TestCase):
         if isinstance(self.KB, wc_kb.KnowledgeBase):
             self.kb = self.KB.copy()
         else:
-            self.kb = wc_kb.io.Reader().run(self.KB)
+            self.kb = wc_kb.io.Reader().run(self.KB)[wc_kb.KnowledgeBase][0]
 
 
 class ModelTestCase(unittest.TestCase):
@@ -61,12 +61,12 @@ class ModelTestCase(unittest.TestCase):
         if isinstance(self.MODEL, wc_lang.Model):
             self.model = self.MODEL.copy()
         else:
-            self.model = wc_lang.io.Reader().run(self.MODEL)
+            self.model = wc_lang.io.Reader().run(self.MODEL)[wc_lang.Model][0]
 
         if isinstance(self.KB, wc_kb.KnowledgeBase):
             self.kb = self.KB.copy()
         elif self.KB is not None:
-            self.kb = wc_kb.io.Reader().run(self.KB)
+            self.kb = wc_kb.io.Reader().run(self.KB)[wc_kb.KnowledgeBase][0]
 
         self.results_dir = tempfile.mkdtemp()
 
