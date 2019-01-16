@@ -19,6 +19,7 @@ import wc_lang
 import wc_lang.io
 from wc_sim.multialgorithm.simulation import Simulation
 from wc_sim.multialgorithm.run_results import RunResults
+from wc_utils.util.ontology import wcm_ontology
 
 
 class KnowledgeBaseTestCase(unittest.TestCase):
@@ -89,7 +90,7 @@ class ModelTestCase(unittest.TestCase):
                 submodel = self.model.submodels.get_one(id=id)
                 for reaction in submodel.reactions:
                     for rate_law in reaction.rate_laws:
-                        rate_law.expression.parameters.get_one(type=wc_lang.ParameterType.k_cat).value = 0
+                        rate_law.expression.parameters.get_one(type=wcm_ontology['WCM:k_cat']).value = 0
 
     def change_parameter_values(self, mod_parameters):
         for id, value in mod_parameters.items():
@@ -102,7 +103,7 @@ class ModelTestCase(unittest.TestCase):
     def change_reaction_k_cat_parameter_values(self, mod_reactions):
         for id, k_cat_value in mod_reactions.items():
             reaction = self.model.reactions.get_one(id=id)
-            reaction.rate_laws[0].expression.parameters.get_one(type=wc_lang.ParameterType.k_cat).value = k_cat_value
+            reaction.rate_laws[0].expression.parameters.get_one(type=wcm_ontology['WCM:k_cat']).value = k_cat_value
 
 
 class SimulationTestCase(ModelTestCase):
@@ -216,7 +217,7 @@ class SimulationTestCase(ModelTestCase):
             for reaction_id in mod_reactions:  # step over each parameters
                 reaction = self.get_reaction(reaction_id)
                 reaction.rate_laws[0].expression.parameters.get_one(
-                    type=wc_lang.ParameterType.k_cat).value = mod_reactions[reaction_id][value_index]
+                    type=wcm_ontology['WCM:k_cat']).value = mod_reactions[reaction_id][value_index]
 
             run_result = self.simulate(end_time=end_time, checkpoint_period=checkpoint_period)[0]
             scan_results.append(run_result)
