@@ -1,4 +1,4 @@
-[//]: # ( [![PyPI package](https://img.shields.io/pypi/v/wc_test.svg)](https://pypi.python.org/pypi/wc_test) )
+[![PyPI package](https://img.shields.io/pypi/v/wc_test.svg)](https://pypi.python.org/pypi/wc_test)
 [![Documentation](https://readthedocs.org/projects/wc-test/badge/?version=latest)](http://docs.karrlab.org/wc_test)
 [![Test results](https://circleci.com/gh/KarrLab/wc_test.svg?style=shield)](https://circleci.com/gh/KarrLab/wc_test)
 [![Test coverage](https://coveralls.io/repos/github/KarrLab/wc_test/badge.svg)](https://coveralls.io/github/KarrLab/wc_test)
