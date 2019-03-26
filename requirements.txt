@@ -2,4 +2,5 @@ cement >= 3.0.0 # for command line programs
 wc_kb
 wc_lang
 wc_model_gen
+wc_onto
 wc_sim

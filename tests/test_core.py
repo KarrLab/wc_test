@@ -12,7 +12,7 @@ TODO:
 
 """
 
-from wc_utils.util.ontology import wcm_ontology
+from wc_onto import onto
 import os
 import unittest
 import wc_kb
@@ -65,7 +65,7 @@ class ModelTestCaseTestCase(unittest.TestCase):
             if mod_submodels[reaction.submodel.id] == False:
                 print(reaction.submodel.id)
                 self.assertEqual(reaction.rate_laws[0].
-                                 expression.parameters.get_one(type=wcm_ontology['WCM:k_cat']).value, 0)
+                                 expression.parameters.get_one(type=onto['WC:k_cat']).value, 0)
 
     def test_get_species(self):
         species = self.test_case.get_species('RNA_1[c]')
@@ -108,17 +108,17 @@ class ModelTestCaseTestCase(unittest.TestCase):
     def test_change_reaction_k_cat_parameter_values(self):
         test_case = self.test_case
         self.assertEqual(test_case.get_reaction('transcription_RNA_1').rate_laws[0].
-                         expression.parameters.get_one(type=wcm_ontology['WCM:k_cat']).value, 0.05)
+                         expression.parameters.get_one(type=onto['WC:k_cat']).value, 0.05)
         self.assertEqual(test_case.get_reaction('degradation_RNA_1').rate_laws[0].
-                         expression.parameters.get_one(type=wcm_ontology['WCM:k_cat']).value, 0.035)
+                         expression.parameters.get_one(type=onto['WC:k_cat']).value, 0.035)
 
         mod_reactions = {'transcription_RNA_1': 5, 'degradation_RNA_1': 6}
         test_case.change_reaction_k_cat_parameter_values(mod_reactions=mod_reactions)
 
         self.assertEqual(test_case.get_reaction('transcription_RNA_1').rate_laws[0].
-                         expression.parameters.get_one(type=wcm_ontology['WCM:k_cat']).value, 5)
+                         expression.parameters.get_one(type=onto['WC:k_cat']).value, 5)
         self.assertEqual(test_case.get_reaction('degradation_RNA_1').rate_laws[0].
-                         expression.parameters.get_one(type=wcm_ontology['WCM:k_cat']).value, 6)
+                         expression.parameters.get_one(type=onto['WC:k_cat']).value, 6)
 
 
 class SimulationTestCaseTestCase(unittest.TestCase):
