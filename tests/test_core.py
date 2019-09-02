@@ -137,14 +137,14 @@ class SimulationTestCaseTestCase(unittest.TestCase):
         results = self.test_case.simulate(end_time=10., checkpoint_period=5.)
         self.assertEqual(len(results), 1)
         self.assertIsInstance(results, list)
-        self.assertIsInstance(results[0], wc_sim.multialgorithm.run_results.RunResults)
+        self.assertIsInstance(results[0], wc_sim.run_results.RunResults)
 
     def test_simulate_2(self):
         results = self.test_case.simulate(end_time=10., checkpoint_period=5., n_sims=2)
         self.assertEqual(len(results), 2)
         self.assertIsInstance(results, list)
-        self.assertIsInstance(results[0], wc_sim.multialgorithm.run_results.RunResults)
-        self.assertIsInstance(results[1], wc_sim.multialgorithm.run_results.RunResults)
+        self.assertIsInstance(results[0], wc_sim.run_results.RunResults)
+        self.assertIsInstance(results[1], wc_sim.run_results.RunResults)
 
     @unittest.skip('Todo: implement')
     def test_delta_conc(self):
@@ -170,39 +170,39 @@ class SimulationTestCaseTestCase(unittest.TestCase):
         mod_parameters = {'mean_doubling_time': [5]}
         scan_results = test_case.sim_scan_parameters(mod_parameters=mod_parameters, end_time=10., checkpoint_period=5.)
         self.assertIsInstance(scan_results, list)
-        self.assertIsInstance(scan_results[0], wc_sim.multialgorithm.run_results.RunResults)
+        self.assertIsInstance(scan_results[0], wc_sim.run_results.RunResults)
 
     def test_sim_scan_parameters_2(self):
         test_case = self.test_case
         mod_parameters = {'mean_doubling_time': [5, 6, 7]}
         scan_results = test_case.sim_scan_parameters(mod_parameters=mod_parameters, end_time=10., checkpoint_period=5.)
         self.assertIsInstance(scan_results, list)
-        self.assertIsInstance(scan_results[0], wc_sim.multialgorithm.run_results.RunResults)
+        self.assertIsInstance(scan_results[0], wc_sim.run_results.RunResults)
 
     def test_sim_scan_species(self):
         test_case = self.test_case
         mod_species = {'RNA_1[c]': [5]}
         scan_results = test_case.sim_scan_species(mod_species=mod_species, end_time=10., checkpoint_period=5.)
         self.assertIsInstance(scan_results, list)
-        self.assertIsInstance(scan_results[0], wc_sim.multialgorithm.run_results.RunResults)
+        self.assertIsInstance(scan_results[0], wc_sim.run_results.RunResults)
 
     def test_sim_scan_species_2(self):
         test_case = self.test_case
         mod_species = {'RNA_1[c]': [5]}
         scan_results = test_case.sim_scan_species(mod_species=mod_species, end_time=10., checkpoint_period=5.)
         self.assertIsInstance(scan_results, list)
-        self.assertIsInstance(scan_results[0], wc_sim.multialgorithm.run_results.RunResults)
+        self.assertIsInstance(scan_results[0], wc_sim.run_results.RunResults)
 
     def test_sim_scan_reactions(self):
         test_case = self.test_case
         mod_reactions = {'transcription_RNA_1': [0.65]}
         scan_results = test_case.sim_scan_reactions(mod_reactions=mod_reactions, end_time=10., checkpoint_period=5.)
         self.assertIsInstance(scan_results, list)
-        self.assertIsInstance(scan_results[0], wc_sim.multialgorithm.run_results.RunResults)
+        self.assertIsInstance(scan_results[0], wc_sim.run_results.RunResults)
 
     def test_sim_scan_reactions_2(self):
         test_case = self.test_case
         mod_reactions = {'transcription_RNA_1': [0.55, 0.65, 0.75], 'degradation_RNA_1': [0.35, 0.45, 0.55]}
         scan_results = test_case.sim_scan_reactions(mod_reactions=mod_reactions, end_time=10., checkpoint_period=5.)
         self.assertIsInstance(scan_results, list)
-        self.assertIsInstance(scan_results[0], wc_sim.multialgorithm.run_results.RunResults)
+        self.assertIsInstance(scan_results[0], wc_sim.run_results.RunResults)

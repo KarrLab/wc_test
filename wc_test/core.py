@@ -18,8 +18,8 @@ import wc_kb.io
 import wc_lang
 import wc_lang.io
 from wc_onto import onto
-from wc_sim.multialgorithm.simulation import Simulation
-from wc_sim.multialgorithm.run_results import RunResults
+from wc_sim.simulation import Simulation
+from wc_sim.run_results import RunResults
 
 
 class KnowledgeBaseTestCase(unittest.TestCase):

@@ -4,8 +4,8 @@ import tempfile
 import unittest
 import wc_kb
 import wc_lang
-from wc_sim.multialgorithm.simulation import Simulation
-from wc_sim.multialgorithm.run_results import RunResults
+from wc_sim.simulation import Simulation
+from wc_sim.run_results import RunResults
 
 
 class KnowledgeBaseTestCase(unittest.TestCase):
