@@ -117,8 +117,9 @@ class SimulationTestCase(ModelTestCase):
 
         simulation = Simulation(self.model)
         for i_sim in range(n_sims):
+            temp_dir = tempfile.mkdtemp(dir=self.results_dir)
             num_events, results_dir = simulation.run(end_time=end_time,
-                                                     results_dir=self.results_dir,
+                                                     results_dir=temp_dir,
                                                      checkpoint_period=checkpoint_period)
 
             run_results = RunResults(results_dir)
