@@ -1,9 +1,6 @@
 # description
 README.rst
 
-# version
-include wc_test/VERSION
-
 # license
 include LICENSE
 
