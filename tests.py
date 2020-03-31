@@ -104,7 +104,7 @@ class ModelSimulationTestCase(unittest.TestCase):
             model = self.MODEL
 
         sim = Simulation(self.MODEL)
-        num_events, _ = sim.run(end_time=end_time,
+        num_events, _ = sim.run(time_max=end_time,
                                 results_dir=self._results_path,
                                 checkpoint_period=checkpoint_period)
         return RunResults(self._results_path)
