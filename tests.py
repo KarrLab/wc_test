@@ -104,9 +104,9 @@ class ModelSimulationTestCase(unittest.TestCase):
             model = self.MODEL
 
         sim = Simulation(self.MODEL)
-        num_events, _ = sim.run(time_max=end_time,
-                                results_dir=self._results_path,
-                                checkpoint_period=checkpoint_period)
+        sim.run(time_max=end_time,
+                results_dir=self._results_path,
+                checkpoint_period=checkpoint_period)
         return RunResults(self._results_path)
 
     def simulate_edge_case(self, end_time, checkpoint_period, param_id, value=0):
