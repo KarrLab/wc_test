@@ -1,5 +1,8 @@
 static_analyses:
   ignore_files: []
+  ignore_unused_requirements: []
+  ignore_missing_requirements:
+    - configobj
 downstream_dependencies: 
   - mycoplasma_pneumoniae
   - rand_wc_model_gen
